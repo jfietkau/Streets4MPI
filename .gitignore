@@ -1,3 +1,8 @@
+# OSM data #
+############
+*.osm
+# These are simply too big to commit in most cases.
+
 # Compiled source #
 ###################
 *.pyc

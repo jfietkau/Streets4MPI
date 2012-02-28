@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# imposm-benchmark.py       
+# imposm-benchmark.py
 # Copyright 2012 Julian Fietkau <http://www.julian-fietkau.de/>
 #
 # This file is part of Streets4MPI.
@@ -25,14 +25,16 @@ from imposm.parser import OSMParser
 from pygraph.classes.graph import graph
 from pygraph.algorithms.minmax import shortest_path
 
-import time
+from math import sqrt
+from time import time
 
 # This class reads an OSM file and builds a graph out of it
 class GraphBuilder(object):
 
     def __init__(self, osmfile):
         self.graph = graph()
-        self.edges = []
+        self.nodes = dict()
+        self.edges = dict()
         # Callbacks are done in parallel, but we can't add the edges before we
         # add the respective nodes. So, we save a list of all edges and insert
         # them into the graph after we're done parsing.
@@ -40,37 +42,46 @@ class GraphBuilder(object):
                       coords_callback = self.coords,
                       ways_callback = self.ways)
         p.parse(osmfile)
-        for x in self.edges:
+        for node in self.nodes.keys():
+            self.graph.add_node(node)
+        for edge in self.edges.keys():
             # The same edge might belong to several OSM ways.
-            if not self.graph.has_edge(x):
-                self.graph.add_edge(x)
-        edges = []
+            if not self.graph.has_edge(edge):
+                self.graph.add_edge(edge, self.length_euclidean(*edge))
 
     def coords(self, coords):
         # callback method for coords
         for osmid, lon, lat in coords:
             # TODO only add coords if they belong to an OSM highway, not any
             # other kind of way
-            self.graph.add_nodes([osmid])
+            # self.graph.add_node(osmid, [('lat', lat), ('lon', lon)])
+            self.nodes[osmid] = dict([('lat', lat), ('lon', lon)])
 
     def ways(self, ways):
         # callback method for ways
         for osmid, tags, refs in ways:
             if 'highway' in tags:
                 for i in range(0, len(refs)-1):
-                    self.edges.append((refs[i], refs[i+1]))
+                    self.edges[(refs[i], refs[i+1])] = (osmid, tags)
+
+    def length_euclidean(self, id1, id2):
+        # calculate distance on a 2D plane
+        p1 = self.nodes[id1]
+        p2 = self.nodes[id2]
+        dist = sqrt( (p2['lat']-p1['lat'])**2 + (p2['lon']-p1['lon'])**2 )
+        return dist
 
 if __name__ == "__main__":
     # instantiate counter and parser and start parsing
-    start = time.time()
+    start = time()
 
     builder = GraphBuilder('osm/hamburg.osm')
 
-    parsed = time.time()
+    parsed = time()
 
     paths, distances = shortest_path(builder.graph, 1619962885)
 
-    pathed = time.time()
+    pathed = time()
 
     # done
     print "Time parsing OSM data: ", parsed - start, " seconds"

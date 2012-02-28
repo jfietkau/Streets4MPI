@@ -54,7 +54,6 @@ class GraphBuilder(object):
         for osmid, lon, lat in coords:
             # TODO only add coords if they belong to an OSM highway, not any
             # other kind of way
-            # self.graph.add_node(osmid, [('lat', lat), ('lon', lon)])
             self.nodes[osmid] = dict([('lat', lat), ('lon', lon)])
 
     def ways(self, ways):

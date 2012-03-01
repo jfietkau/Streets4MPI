@@ -35,43 +35,105 @@ class GraphBuilder(object):
     LONGITUDE = 1
 
     def __init__(self, osmfile):
+        # parse the input file and save its contents in memory
         self.graph = graph()
-        self.nodes = dict()
+        self.coords = dict()
         self.edges = dict()
+        self.all_osm_relations = dict()
+        self.all_osm_ways = dict()
+        self.all_osm_nodes = dict()
+        self.residential_nodes = set()
+        self.industrial_nodes = set()
+        self.commercial_nodes = set()
+
         # Callbacks are done in parallel, but we can't add the edges before we
         # add the respective nodes. So, we save a list of all edges and insert
         # them into the graph after we're done parsing.
         p = OSMParser(concurrency = 4,
-                      coords_callback = self.coords,
-                      ways_callback = self.ways)
+                      coords_callback = self.coords_callback,
+                      nodes_callback = self.nodes_callback,
+                      ways_callback = self.ways_callback,
+                      relations_callback = self.relations_callback)
         p.parse(osmfile)
-        for node in self.nodes.keys():
-            self.graph.add_node(node)
-        for edge in self.edges.keys():
-            # The same edge might belong to several OSM ways.
-            if not self.graph.has_edge(edge):
-                self.graph.add_edge(edge, self.length_euclidean(*edge))
 
-    def coords(self, coords):
-        # callback method for coords
-        for osmid, lon, lat in coords:
-            # TODO only add coords if they belong to an OSM highway, not any
-            # other kind of way
-            self.nodes[osmid] = dict([(self.LATITUDE, lat), (self.LONGITUDE, lon)])
-
-    def ways(self, ways):
-        # callback method for ways
-        for osmid, tags, refs in ways:
+    def init_graph(self):
+        # construct the actual graph structure from the input data
+        for osmid, tags, refs in self.all_osm_ways.values():
             if 'highway' in tags:
+                for ref in refs:
+                    if not self.graph.has_node(ref):
+                        self.graph.add_node(ref)
                 for i in range(0, len(refs)-1):
-                    self.edges[(refs[i], refs[i+1])] = (osmid, tags)
+                    edge = (refs[i], refs[i+1])
+                    if not self.graph.has_edge(edge):
+                        self.graph.add_edge(edge, self.length_euclidean(*edge))
+
+    def find_node_categories(self):
+        # collect relevant categories of nodes in their respective sets
+        # TODO there has to be a better way to do this
+        for osmid, tags, members in self.all_osm_relations.values():
+            if 'landuse' in tags:
+                if tags['landuse'] == 'residential':
+                    self.residential_nodes = self.residential_nodes | self.get_all_child_nodes(osmid)
+                if tags['landuse'] == 'industrial':
+                    self.industrial_nodes = self.industrial_nodes | self.get_all_child_nodes(osmid)
+                if tags['landuse'] == 'commercial':
+                    self.commercial_nodes = self.commercial_nodes | self.get_all_child_nodes(osmid)
+        for osmid, tags, refs in self.all_osm_ways.values():
+            if 'landuse' in tags:
+                if tags['landuse'] == 'residential':
+                    self.residential_nodes = self.residential_nodes | self.get_all_child_nodes(osmid)
+                if tags['landuse'] == 'industrial':
+                    self.industrial_nodes = self.industrial_nodes | self.get_all_child_nodes(osmid)
+                if tags['landuse'] == 'commercial':
+                    self.commercial_nodes = self.commercial_nodes | self.get_all_child_nodes(osmid)
+        for osmid, tags, coords in self.all_osm_nodes.values():
+            if 'landuse' in tags:
+                if tags['landuse'] == 'residential':
+                    self.residential_nodes = self.residential_nodes | self.get_all_child_nodes(osmid)
+                if tags['landuse'] == 'industrial':
+                    self.industrial_nodes = self.industrial_nodes | self.get_all_child_nodes(osmid)
+                if tags['landuse'] == 'commercial':
+                    self.commercial_nodes = self.commercial_nodes | self.get_all_child_nodes(osmid)
+
+    def coords_callback(self, coords):
+        for osmid, lon, lat in coords:
+            self.coords[osmid] = dict([(self.LATITUDE, lat), (self.LONGITUDE, lon)])
+
+    def nodes_callback(self, nodes):
+        for node in nodes:
+            self.all_osm_nodes[node[0]] = node
+
+    def ways_callback(self, ways):
+        for way in ways:
+            self.all_osm_ways[way[0]] = way
+
+    def relations_callback(self, relations):
+        for relation in relations:
+            self.all_osm_relations[relation[0]] = relation
 
     def length_euclidean(self, id1, id2):
         # calculate distance on a 2D plane
-        p1 = self.nodes[id1]
-        p2 = self.nodes[id2]
+        p1 = self.coords[id1]
+        p2 = self.coords[id2]
         dist = sqrt( (p2[self.LATITUDE]-p1[self.LATITUDE])**2 + (p2[self.LONGITUDE]-p1[self.LONGITUDE])**2 )
         return dist
+
+    def get_all_child_nodes(self, osmid):
+        # given any OSM id, construct a set of the ids of all descendant nodes
+        if osmid in self.all_osm_nodes.keys():
+            return set([osmid])
+        if osmid in self.all_osm_relations.keys():
+            children = set()
+            for osmid, osmtype, role in self.all_osm_relations[osmid][2]:
+                children = children | self.get_all_child_nodes(osmid)
+            return children
+        if osmid in self.all_osm_ways.keys():
+            children = set()
+            for ref in self.all_osm_ways[osmid][2]:
+                children.add(ref)
+            return children
+        return set()
 
 if __name__ == "__main__":
     # instantiate counter and parser and start parsing
@@ -81,13 +143,26 @@ if __name__ == "__main__":
 
     parsed = time()
 
+    builder.init_graph()
+
+    initialized = time()
+
+    builder.find_node_categories()
+
+    categorized = time()
+
     paths, distances = shortest_path(builder.graph, 1287690225)
 
     pathed = time()
 
     # done
     print "Time parsing OSM data: ", parsed - start, " seconds"
-    print "Time calculating shortest paths: ", pathed - parsed, " seconds"
+    print "Time initializing data structures: ", initialized - parsed, " seconds"
+    print "Time finding node categories: ", categorized - initialized, " seconds"
+    print "Time calculating shortest paths: ", pathed - categorized, " seconds"
     print "Nodes: ", len(builder.graph.nodes())
     print "Edges: ", len(builder.graph.edges())
+    print "Residential Nodes: ", len(builder.residential_nodes)
+    print "Industrial Nodes: ", len(builder.industrial_nodes)
+    print "Commercial Nodes: ", len(builder.commercial_nodes)
 

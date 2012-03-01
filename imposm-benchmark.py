@@ -31,6 +31,9 @@ from time import time
 # This class reads an OSM file and builds a graph out of it
 class GraphBuilder(object):
 
+    LATITUDE = 0
+    LONGITUDE = 1
+
     def __init__(self, osmfile):
         self.graph = graph()
         self.nodes = dict()
@@ -54,7 +57,7 @@ class GraphBuilder(object):
         for osmid, lon, lat in coords:
             # TODO only add coords if they belong to an OSM highway, not any
             # other kind of way
-            self.nodes[osmid] = dict([('lat', lat), ('lon', lon)])
+            self.nodes[osmid] = dict([(self.LATITUDE, lat), (self.LONGITUDE, lon)])
 
     def ways(self, ways):
         # callback method for ways
@@ -67,7 +70,7 @@ class GraphBuilder(object):
         # calculate distance on a 2D plane
         p1 = self.nodes[id1]
         p2 = self.nodes[id2]
-        dist = sqrt( (p2['lat']-p1['lat'])**2 + (p2['lon']-p1['lon'])**2 )
+        dist = sqrt( (p2[self.LATITUDE]-p1[self.LATITUDE])**2 + (p2[self.LONGITUDE]-p1[self.LONGITUDE])**2 )
         return dist
 
 if __name__ == "__main__":

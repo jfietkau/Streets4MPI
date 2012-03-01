@@ -81,7 +81,7 @@ if __name__ == "__main__":
 
     parsed = time()
 
-    paths, distances = shortest_path(builder.graph, 1619962885)
+    paths, distances = shortest_path(builder.graph, 1287690225)
 
     pathed = time()
 

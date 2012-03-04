@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# imposm-benchmark.py
+# osmdata.py
 # Copyright 2012 Julian Fietkau <http://www.julian-fietkau.de/>
 #
 # This file is part of Streets4MPI.
@@ -34,7 +34,7 @@ class GraphBuilder(object):
     LATITUDE = 0
     LONGITUDE = 1
 
-    def __init__(self, osmfile):
+    def __init__(self, osmfile, parser_concurrency):
         # parse the input file and save its contents in memory
         self.graph = graph()
         self.coords = dict()
@@ -46,10 +46,7 @@ class GraphBuilder(object):
         self.industrial_nodes = set()
         self.commercial_nodes = set()
 
-        # Callbacks are done in parallel, but we can't add the edges before we
-        # add the respective nodes. So, we save a list of all edges and insert
-        # them into the graph after we're done parsing.
-        p = OSMParser(concurrency = 4,
+        p = OSMParser(concurrency = parser_concurrency,
                       coords_callback = self.coords_callback,
                       nodes_callback = self.nodes_callback,
                       ways_callback = self.ways_callback,
@@ -139,7 +136,7 @@ if __name__ == "__main__":
     # instantiate counter and parser and start parsing
     start = time()
 
-    builder = GraphBuilder('osm/hamburg.osm')
+    builder = GraphBuilder('osm/hamburg.osm', 4)
 
     parsed = time()
 

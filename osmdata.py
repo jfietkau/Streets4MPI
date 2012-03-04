@@ -160,6 +160,10 @@ if __name__ == "__main__":
     print "Nodes: ", len(builder.graph.nodes())
     print "Edges: ", len(builder.graph.edges())
     print "Residential Nodes: ", len(builder.residential_nodes)
+    graph_nodes = set(builder.graph.nodes())
+    print "Residential Nodes connected to street network: ", len(builder.residential_nodes & graph_nodes)
     print "Industrial Nodes: ", len(builder.industrial_nodes)
+    print "Industrial Nodes connected to street network: ", len(builder.industrial_nodes & graph_nodes)
     print "Commercial Nodes: ", len(builder.commercial_nodes)
+    print "Commercial Nodes connected to street network: ", len(builder.commercial_nodes & graph_nodes)
 

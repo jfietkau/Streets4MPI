@@ -45,6 +45,9 @@ class GraphBuilder(object):
         self.residential_nodes = set()
         self.industrial_nodes = set()
         self.commercial_nodes = set()
+        self.connected_residential_nodes = set()
+        self.connected_industrial_nodes = set()
+        self.connected_commercial_nodes = set()
 
         p = OSMParser(concurrency = parser_concurrency,
                       coords_callback = self.coords_callback,
@@ -92,6 +95,10 @@ class GraphBuilder(object):
                     self.industrial_nodes = self.industrial_nodes | self.get_all_child_nodes(osmid)
                 if tags['landuse'] == 'commercial':
                     self.commercial_nodes = self.commercial_nodes | self.get_all_child_nodes(osmid)
+        graph_nodes = set(self.graph.nodes())
+        self.connected_residential_nodes = self.residential_nodes & graph_nodes
+        self.connected_industrial_nodes = self.industrial_nodes & graph_nodes
+        self.connected_commercial_nodes = self.commercial_nodes & graph_nodes
 
     def coords_callback(self, coords):
         for osmid, lon, lat in coords:
@@ -160,10 +167,9 @@ if __name__ == "__main__":
     print "Nodes: ", len(builder.graph.nodes())
     print "Edges: ", len(builder.graph.edges())
     print "Residential Nodes: ", len(builder.residential_nodes)
-    graph_nodes = set(builder.graph.nodes())
-    print "Residential Nodes connected to street network: ", len(builder.residential_nodes & graph_nodes)
+    print "Residential Nodes connected to street network: ", len(builder.connected_residential_nodes)
     print "Industrial Nodes: ", len(builder.industrial_nodes)
-    print "Industrial Nodes connected to street network: ", len(builder.industrial_nodes & graph_nodes)
+    print "Industrial Nodes connected to street network: ", len(builder.connected_industrial_nodes)
     print "Commercial Nodes: ", len(builder.commercial_nodes)
-    print "Commercial Nodes connected to street network: ", len(builder.commercial_nodes & graph_nodes)
+    print "Commercial Nodes connected to street network: ", len(builder.connected_commercial_nodes)
 

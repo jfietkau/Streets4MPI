@@ -20,17 +20,38 @@
 # along with Streets4MPI.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import osmdata
+from datetime import datetime
+
+from osmdata import GraphBuilder
+from tripmanager import TripManager
 from settings import settings
 
 # This class runs the Streets4MPI program.
 class Streets4MPI(object):
 
     def __init__(self):
-        data = osmdata.GraphBuilder(settings['osm_file'], settings['parser_concurrency'])
+        self.log("Welcome to Streets4MPI!")
+        self.log("Reading OpenStreetMap data...")
+        data = GraphBuilder(settings['osm_file'], settings['parser_concurrency'])
+        self.log("Building street network...")
         data.init_graph()
+        self.log("Locating area types...")
+        data.find_node_categories()
+        self.log("Generating trips...")
+        tm = TripManager(settings['number_of_residents'],
+                         data.connected_residential_nodes,
+                         data.connected_commercial_nodes | data.connected_industrial_nodes)
+        tm.create_trips()
+        self.log("Done!")
+        #print tm.trips
+
+    def log(self, *output):
+        if(settings['logging'] == 'stdout'):
+            print '[', datetime.now(), ']',
+            for o in output:
+                print o,
+            print ''
 
 if __name__ == "__main__":
-    # load OSM data
     Streets4MPI()
 

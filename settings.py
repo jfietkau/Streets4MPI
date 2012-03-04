@@ -22,6 +22,9 @@
 
 settings = {
     'osm_file' : 'osm/hamburg.osm',
-    'parser_concurrency' : 4
+    'parser_concurrency' : 4,
+    'number_of_residents' : 10000,
+
+    'logging' : 'stdout',
 }
 

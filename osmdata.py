@@ -48,6 +48,9 @@ class GraphBuilder(object):
         self.all_osm_ways = dict()
         self.all_osm_nodes = dict()
 
+        # save max speed for every edge
+        self.max_speeds = dict()
+
         # nodes with specific landuse tags
         self.residential_nodes = set()
         self.industrial_nodes = set()
@@ -57,6 +60,27 @@ class GraphBuilder(object):
         self.connected_residential_nodes = set()
         self.connected_industrial_nodes = set()
         self.connected_commercial_nodes = set()
+
+        # mapping from highway types to max speeds
+        # we do this so there's always a speed limit for every edge, even if
+        # none is in the OSM data
+        self.maxspeed_map = dict()
+        self.maxspeed_map['motorway'] = 140
+        self.maxspeed_map['trunk'] = 120
+        self.maxspeed_map['primary'] = 100
+        self.maxspeed_map['secondary'] = 80
+        self.maxspeed_map['tertiary'] = 70
+        self.maxspeed_map['road'] = 50
+        self.maxspeed_map['minor'] = 50
+        self.maxspeed_map['unclassified'] = 50
+        self.maxspeed_map['residential'] = 30
+        self.maxspeed_map['track'] = 30
+        self.maxspeed_map['service'] = 20
+        self.maxspeed_map['path'] = 10
+        self.maxspeed_map['cycleway'] = 1   # >0 to prevent infinite weights
+        self.maxspeed_map['bridleway'] = 1  # >0 to prevent infinite weights
+        self.maxspeed_map['pedestrian'] = 1 # >0 to prevent infinite weights
+        self.maxspeed_map['footway'] = 1    # >0 to prevent infinite weights
 
         p = OSMParser(concurrency = parser_concurrency,
                       coords_callback = self.coords_callback,
@@ -76,6 +100,15 @@ class GraphBuilder(object):
                     edge = (refs[i], refs[i+1])
                     if not self.graph.has_edge(edge):
                         self.graph.add_edge(edge, self.length_euclidean(*edge))
+                    if 'maxspeed' in tags:
+                        if tags['maxspeed'].isdigit():
+                            self.max_speeds[edge] = int(tags['maxspeed'])
+                        elif tags['maxspeed'] == 'none':
+                            self.max_speeds[edge] = 140
+                    elif tags['highway'] in self.maxspeed_map.keys():
+                        self.max_speeds[edge] = self.maxspeed_map[tags['highway']]
+                    else:
+                        self.max_speeds[edge] = 50
 
     def find_node_categories(self):
         # collect relevant categories of nodes in their respective sets

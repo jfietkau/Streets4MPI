@@ -36,15 +36,24 @@ class GraphBuilder(object):
 
     def __init__(self, osmfile, parser_concurrency):
         # parse the input file and save its contents in memory
+
+        # graph that holds the street network
         self.graph = graph()
+
+        # coord pairs as returned from imposm
         self.coords = dict()
-        self.edges = dict()
+
+        # active copy of OSM data indexed by OSM id
         self.all_osm_relations = dict()
         self.all_osm_ways = dict()
         self.all_osm_nodes = dict()
+
+        # nodes with specific landuse tags
         self.residential_nodes = set()
         self.industrial_nodes = set()
         self.commercial_nodes = set()
+
+        # subset that is also connected to the street network
         self.connected_residential_nodes = set()
         self.connected_industrial_nodes = set()
         self.connected_commercial_nodes = set()

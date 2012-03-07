@@ -43,7 +43,7 @@ class Streets4MPI(object):
                          data.connected_residential_nodes,
                          data.connected_commercial_nodes | data.connected_industrial_nodes)
         tm.create_trips()
-        sim = Simulation(data.graph, tm.trips)
+        sim = Simulation(data.graph, tm.trips, self.log_indent)
         for step in range(settings['max_simulation_steps']):
             self.log("Running simulation step", step + 1, "of", settings['max_simulation_steps'], "...")
             sim.step()
@@ -52,6 +52,13 @@ class Streets4MPI(object):
     def log(self, *output):
         if(settings['logging'] == 'stdout'):
             print '[', datetime.now(), ']',
+            for o in output:
+                print o,
+            print ''
+
+    def log_indent(self, *output):
+        if(settings['logging'] == 'stdout'):
+            print '[', datetime.now(), ']  ',
             for o in output:
                 print o,
             print ''

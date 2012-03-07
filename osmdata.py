@@ -25,7 +25,7 @@ from imposm.parser import OSMParser
 from pygraph.classes.graph import graph
 from pygraph.algorithms.minmax import shortest_path
 
-from math import sqrt
+from math import sqrt, radians, sin, cos, asin
 from time import time
 
 # This class reads an OSM file and builds a graph out of it
@@ -33,6 +33,8 @@ class GraphBuilder(object):
 
     LATITUDE = 0
     LONGITUDE = 1
+    LENGTH = 0
+    MAXSPEED = 1
 
     def __init__(self, osmfile, parser_concurrency):
         # parse the input file and save its contents in memory
@@ -47,9 +49,6 @@ class GraphBuilder(object):
         self.all_osm_relations = dict()
         self.all_osm_ways = dict()
         self.all_osm_nodes = dict()
-
-        # save max speed for every edge
-        self.max_speeds = dict()
 
         # nodes with specific landuse tags
         self.residential_nodes = set()
@@ -99,16 +98,18 @@ class GraphBuilder(object):
                 for i in range(0, len(refs)-1):
                     edge = (refs[i], refs[i+1])
                     if not self.graph.has_edge(edge):
-                        self.graph.add_edge(edge, self.length_euclidean(*edge))
+                        self.graph.add_edge(edge)
+                    length = self.length_haversine(*edge)
+                    maxspeed = 50
                     if 'maxspeed' in tags:
                         if tags['maxspeed'].isdigit():
-                            self.max_speeds[edge] = int(tags['maxspeed'])
+                            maxspeed = int(tags['maxspeed'])
                         elif tags['maxspeed'] == 'none':
-                            self.max_speeds[edge] = 140
+                            maxspeed = 140
                     elif tags['highway'] in self.maxspeed_map.keys():
-                        self.max_speeds[edge] = self.maxspeed_map[tags['highway']]
-                    else:
-                        self.max_speeds[edge] = 50
+                        maxspeed = self.maxspeed_map[tags['highway']]
+                    self.graph.add_edge_attribute(edge, (self.LENGTH, length,))
+                    self.graph.add_edge_attribute(edge, (self.MAXSPEED, maxspeed,))
 
     def find_node_categories(self):
         # collect relevant categories of nodes in their respective sets
@@ -158,13 +159,6 @@ class GraphBuilder(object):
         for relation in relations:
             self.all_osm_relations[relation[0]] = relation
 
-    def length_euclidean(self, id1, id2):
-        # calculate distance on a 2D plane
-        p1 = self.coords[id1]
-        p2 = self.coords[id2]
-        dist = sqrt( (p2[self.LATITUDE]-p1[self.LATITUDE])**2 + (p2[self.LONGITUDE]-p1[self.LONGITUDE])**2 )
-        return dist
-
     def get_all_child_nodes(self, osmid):
         # given any OSM id, construct a set of the ids of all descendant nodes
         if osmid in self.all_osm_nodes.keys():
@@ -180,6 +174,33 @@ class GraphBuilder(object):
                 children.add(ref)
             return children
         return set()
+
+    def length_euclidean(self, id1, id2):
+        # calculate distance on a 2D plane assuming latitude and longitude
+        # form a planar uniform coordinate system (obviously not 100% accurate)
+        p1 = self.coords[id1]
+        p2 = self.coords[id2]
+        # assuming distance between to degrees of latitude to be approx.
+        # 66.4km as is the case for Hamburg, and distance between two
+        # degrees of longitude is always 111.32km
+        dist = sqrt( ((p2[self.LATITUDE]-p1[self.LATITUDE])*111.32)**2
+                     + ((p2[self.LONGITUDE]-p1[self.LONGITUDE])*66.4)**2 )
+        return dist*1000 # return distance in m
+
+    def length_haversine(self, id1, id2):
+        # calculate distance using the haversine formula, which incorporates
+        # earth curvature
+        # see http://en.wikipedia.org/wiki/Haversine_formula
+        lat1 = self.coords[id1][self.LATITUDE]
+        lon1 = self.coords[id1][self.LONGITUDE]
+        lat2 = self.coords[id2][self.LATITUDE]
+        lon2 = self.coords[id2][self.LONGITUDE]
+        lat1, lon1, lat2, lon2 = map(radians, [lat1, lon1, lat2, lon2])
+        dlon = lon2 - lon1
+        dlat = lat2 - lat1
+        a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
+        c = 2 * asin(sqrt(a))
+        return 6367000 * c # return distance in m
 
 if __name__ == "__main__":
     # instantiate counter and parser and start parsing

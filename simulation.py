@@ -28,37 +28,60 @@ from time import time
 # This class does the actual simulation steps
 class Simulation(object):
 
-    def __init__(self, graph, trips):
+    def __init__(self, graph, trips, log_callback):
         self.graph = graph
         self.trips = trips
         self.edge_usage = dict()
+        self.log_callback = log_callback
 
     def step(self):
+        self.log_callback("Preparing edges...")
         for edge in self.graph.edges():
             self.edge_usage[edge] = 0
-        for resident in self.trips.keys():
+            attrs = self.graph.edge_attributes(edge)
+            length = None
+            maxspeed = None
+            for attr in attrs:
+                if attr[0] == 0:
+                    length = attr[1]
+                if attr[0] == 1:
+                    maxspeed = attr[1]
+            if length != None and maxspeed != None:
+                expected_time = length / maxspeed
+                self.graph.set_edge_weight(edge, expected_time)
+        origin_nr = 0
+        for origin in self.trips.keys():
             # calculate all shortest paths from resident to every other node
-            paths = shortest_path(self.graph, resident)[0]
-            for goal in self.trips[resident]:
+            origin_nr += 1
+            self.log_callback("Origin nr", origin_nr, "...")
+            paths = shortest_path(self.graph, origin)[0]
+            for goal in self.trips[origin]:
                 # is the goal even reachable at all? if not, ignore for now
                 if goal in paths:
                     # hop along the edges until we're there
                     current = goal
-                    while current != resident:
+                    while current != origin:
                         self.edge_usage[(current, paths[current])] += 1
                         current = paths[current]
 
 if __name__ == "__main__":
 
+    def out(*output):
+        for o in output:
+            print o,
+        print ''
+
     graph = graph()
     graph.add_nodes([1,2,3])
     graph.add_edge((1,2,))
     graph.add_edge((2,3,))
+    graph.add_edge_attributes((1,2,), [(0, 10,), (1, 50,)])
+    graph.add_edge_attributes((2,3,), [(0, 100,), (1, 140,)])
 
     trips = dict()
     trips[1] = [3]
 
-    sim = Simulation(graph, trips)
+    sim = Simulation(graph, trips, out)
     for step in range(10):
         print "Running simulation step", step+1, "of 10..."
         sim.step()

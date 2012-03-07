@@ -24,6 +24,7 @@ from datetime import datetime
 
 from osmdata import GraphBuilder
 from tripmanager import TripManager
+from simulation import Simulation
 from settings import settings
 
 # This class runs the Streets4MPI program.
@@ -42,8 +43,11 @@ class Streets4MPI(object):
                          data.connected_residential_nodes,
                          data.connected_commercial_nodes | data.connected_industrial_nodes)
         tm.create_trips()
+        sim = Simulation(data.graph, tm.trips)
+        for step in range(settings['max_simulation_steps']):
+            self.log("Running simulation step", step + 1, "of", settings['max_simulation_steps'], "...")
+            sim.step()
         self.log("Done!")
-        #print tm.trips
 
     def log(self, *output):
         if(settings['logging'] == 'stdout'):

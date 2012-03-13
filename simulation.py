@@ -25,6 +25,8 @@ from pygraph.algorithms.minmax import shortest_path
 
 from time import time
 
+from osmdata import GraphBuilder
+
 # This class does the actual simulation steps
 class Simulation(object):
 
@@ -42,9 +44,9 @@ class Simulation(object):
             length = None
             maxspeed = None
             for attr in attrs:
-                if attr[0] == 0:
+                if attr[0] == GraphBuilder.LENGTH:
                     length = attr[1]
-                if attr[0] == 1:
+                if attr[0] == GraphBuilder.MAXSPEED:
                     maxspeed = attr[1]
             if length != None and maxspeed != None:
                 expected_time = length / maxspeed

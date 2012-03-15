@@ -23,24 +23,23 @@
 from imposm.parser import OSMParser
 
 from pygraph.classes.graph import graph
-from pygraph.algorithms.minmax import shortest_path
 
 from math import sqrt, radians, sin, cos, asin
 from time import time
+
+from streetnetwork import StreetNetwork 
 
 # This class reads an OSM file and builds a graph out of it
 class GraphBuilder(object):
 
     LATITUDE = 0
     LONGITUDE = 1
-    LENGTH = 0
-    MAXSPEED = 1
 
     def __init__(self, osmfile, parser_concurrency):
         # parse the input file and save its contents in memory
 
-        # graph that holds the street network
-        self.graph = graph()
+        # initialize street network
+        self.street_network = StreetNetwork()
 
         # coord pairs as returned from imposm
         self.coords = dict()
@@ -88,18 +87,16 @@ class GraphBuilder(object):
                       relations_callback = self.relations_callback)
         p.parse(osmfile)
 
-    def init_graph(self):
+    def build_street_network(self):
         # construct the actual graph structure from the input data
         for osmid, tags, refs in self.all_osm_ways.values():
             if 'highway' in tags:
-                for ref in refs:
-                    if not self.graph.has_node(ref):
-                        self.graph.add_node(ref)
                 for i in range(0, len(refs)-1):
-                    edge = (refs[i], refs[i+1])
-                    if not self.graph.has_edge(edge):
-                        self.graph.add_edge(edge)
-                    length = self.length_haversine(*edge)
+                    node1 = refs[i]
+                    node2 = refs[i+1]
+                    # calculate street length
+                    length = self.length_haversine(node1, node2)
+                    # determine max speed
                     maxspeed = 50
                     if 'maxspeed' in tags:
                         if tags['maxspeed'].isdigit():
@@ -108,8 +105,10 @@ class GraphBuilder(object):
                             maxspeed = 140
                     elif tags['highway'] in self.maxspeed_map.keys():
                         maxspeed = self.maxspeed_map[tags['highway']]
-                    self.graph.add_edge_attribute(edge, (self.LENGTH, length,))
-                    self.graph.add_edge_attribute(edge, (self.MAXSPEED, maxspeed,))
+                    # add street to street network
+                    if not self.street_network.exists_street(node1, node2):
+                        self.street_network.add_street(node1, node2, length, maxspeed)
+        return self.street_network
 
     def find_node_categories(self):
         # collect relevant categories of nodes in their respective sets
@@ -138,7 +137,8 @@ class GraphBuilder(object):
                     self.industrial_nodes = self.industrial_nodes | self.get_all_child_nodes(osmid)
                 if tags['landuse'] == 'commercial':
                     self.commercial_nodes = self.commercial_nodes | self.get_all_child_nodes(osmid)
-        graph_nodes = set(self.graph.nodes())
+        # TODO do not access the graph directly
+        graph_nodes = set(self.street_network._graph.nodes())
         self.connected_residential_nodes = self.residential_nodes & graph_nodes
         self.connected_industrial_nodes = self.industrial_nodes & graph_nodes
         self.connected_commercial_nodes = self.commercial_nodes & graph_nodes

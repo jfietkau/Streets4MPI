@@ -26,12 +26,14 @@ from pygraph.algorithms.minmax import shortest_path
 from time import time
 
 from osmdata import GraphBuilder
+from streetnetwork import StreetNetwork
 
 # This class does the actual simulation steps
 class Simulation(object):
 
-    def __init__(self, graph, trips, log_callback):
-        self.graph = graph
+    def __init__(self, street_network, trips, log_callback):
+        # TODO do not access the graph directly
+        self.graph = street_network._graph
         self.trips = trips
         self.edge_usage = dict()
         self.log_callback = log_callback
@@ -44,9 +46,9 @@ class Simulation(object):
             length = None
             maxspeed = None
             for attr in attrs:
-                if attr[0] == GraphBuilder.LENGTH:
+                if attr[0] == StreetNetwork.ATTRIBUTE_KEY_LENGTH:
                     length = attr[1]
-                if attr[0] == GraphBuilder.MAXSPEED:
+                if attr[0] == StreetNetwork.ATTRIBUTE_KEY_MAX_SPEED:
                     maxspeed = attr[1]
             if length != None and maxspeed != None:
                 expected_time = length / maxspeed

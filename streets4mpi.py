@@ -35,7 +35,7 @@ class Streets4MPI(object):
         self.log("Reading OpenStreetMap data...")
         data = GraphBuilder(settings['osm_file'], settings['parser_concurrency'])
         self.log("Building street network...")
-        data.init_graph()
+        street_network = data.build_street_network()
         self.log("Locating area types...")
         data.find_node_categories()
         self.log("Generating trips...")
@@ -43,7 +43,7 @@ class Streets4MPI(object):
                          data.connected_residential_nodes,
                          data.connected_commercial_nodes | data.connected_industrial_nodes)
         tm.create_trips()
-        sim = Simulation(data.graph, tm.trips, self.log_indent)
+        sim = Simulation(street_network, tm.trips, self.log_indent)
         for step in range(settings['max_simulation_steps']):
             self.log("Running simulation step", step + 1, "of", settings['max_simulation_steps'], "...")
             sim.step()

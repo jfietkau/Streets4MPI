@@ -21,7 +21,7 @@
 #
 
 settings = {
-    'osm_file' : 'osm/stellingen.osm',
+    'osm_file' : 'osm/test.osm',
     'parser_concurrency' : 4,
     'number_of_residents' : 20,
     'max_simulation_steps' : 5,

@@ -1,7 +1,9 @@
 # OSM data #
 ############
+# These are simply too big to commit in most cases
 *.osm
-# These are simply too big to commit in most cases.
+# Except a small test file
+!test.osm
 
 # Compiled source #
 ###################

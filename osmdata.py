@@ -62,23 +62,23 @@ class GraphBuilder(object):
         # mapping from highway types to max speeds
         # we do this so there's always a speed limit for every edge, even if
         # none is in the OSM data
-        self.maxspeed_map = dict()
-        self.maxspeed_map['motorway'] = 140
-        self.maxspeed_map['trunk'] = 120
-        self.maxspeed_map['primary'] = 100
-        self.maxspeed_map['secondary'] = 80
-        self.maxspeed_map['tertiary'] = 70
-        self.maxspeed_map['road'] = 50
-        self.maxspeed_map['minor'] = 50
-        self.maxspeed_map['unclassified'] = 50
-        self.maxspeed_map['residential'] = 30
-        self.maxspeed_map['track'] = 30
-        self.maxspeed_map['service'] = 20
-        self.maxspeed_map['path'] = 10
-        self.maxspeed_map['cycleway'] = 1   # >0 to prevent infinite weights
-        self.maxspeed_map['bridleway'] = 1  # >0 to prevent infinite weights
-        self.maxspeed_map['pedestrian'] = 1 # >0 to prevent infinite weights
-        self.maxspeed_map['footway'] = 1    # >0 to prevent infinite weights
+        self.max_speed_map = dict()
+        self.max_speed_map['motorway'] = 140
+        self.max_speed_map['trunk'] = 120
+        self.max_speed_map['primary'] = 100
+        self.max_speed_map['secondary'] = 80
+        self.max_speed_map['tertiary'] = 70
+        self.max_speed_map['road'] = 50
+        self.max_speed_map['minor'] = 50
+        self.max_speed_map['unclassified'] = 50
+        self.max_speed_map['residential'] = 30
+        self.max_speed_map['track'] = 30
+        self.max_speed_map['service'] = 20
+        self.max_speed_map['path'] = 10
+        self.max_speed_map['cycleway'] = 1   # >0 to prevent infinite weights
+        self.max_speed_map['bridleway'] = 1  # >0 to prevent infinite weights
+        self.max_speed_map['pedestrian'] = 1 # >0 to prevent infinite weights
+        self.max_speed_map['footway'] = 1    # >0 to prevent infinite weights
 
         p = OSMParser(concurrency = parser_concurrency,
                       coords_callback = self.coords_callback,
@@ -96,22 +96,23 @@ class GraphBuilder(object):
                     # calculate street length
                     length = self.length_haversine(refs[i], refs[i+1])
                     # determine max speed
-                    maxspeed = 50
+                    max_speed = 50
                     if 'maxspeed' in tags:
                         if tags['maxspeed'].isdigit():
-                            maxspeed = int(tags['maxspeed'])
+                            max_speed = int(tags['maxspeed'])
                         elif tags['maxspeed'] == 'none':
-                            maxspeed = 140
-                    elif tags['highway'] in self.maxspeed_map.keys():
-                        maxspeed = self.maxspeed_map[tags['highway']]
+                            max_speed = 140
+                    elif tags['highway'] in self.max_speed_map.keys():
+                        max_speed = self.max_speed_map[tags['highway']]
                     # add street to street network
                     if not self.street_network.exists_street(street):
-                        self.street_network.add_street(street, length, maxspeed)
+                        self.street_network.add_street(street, length, max_speed)
         return self.street_network
 
     def find_node_categories(self):
         # collect relevant categories of nodes in their respective sets
         # TODO there has to be a better way to do this
+        # TODO do this inside class StreetNetwork?
         for osmid, tags, members in self.all_osm_relations.values():
             if 'landuse' in tags:
                 if tags['landuse'] == 'residential':
@@ -136,11 +137,10 @@ class GraphBuilder(object):
                     self.industrial_nodes = self.industrial_nodes | self.get_all_child_nodes(osmid)
                 if tags['landuse'] == 'commercial':
                     self.commercial_nodes = self.commercial_nodes | self.get_all_child_nodes(osmid)
-        # TODO do not access the graph directly
-        graph_nodes = set(self.street_network._graph.nodes())
-        self.connected_residential_nodes = self.residential_nodes & graph_nodes
-        self.connected_industrial_nodes = self.industrial_nodes & graph_nodes
-        self.connected_commercial_nodes = self.commercial_nodes & graph_nodes
+        street_network_nodes = set(self.street_network.get_nodes())
+        self.connected_residential_nodes = self.residential_nodes & street_network_nodes
+        self.connected_industrial_nodes = self.industrial_nodes & street_network_nodes
+        self.connected_commercial_nodes = self.commercial_nodes & street_network_nodes
 
     def coords_callback(self, coords):
         for osmid, lon, lat in coords:

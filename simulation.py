@@ -51,8 +51,7 @@ class Simulation(object):
             # calculate all shortest paths from resident to every other node
             origin_nr += 1
             self.log_callback("Origin nr", origin_nr, "...")
-            # TODO do not access the graph directly
-            paths = shortest_path(self.street_network._graph, origin)[0]
+            paths = self.street_network.calculate_shortest_paths(origin)
             for goal in self.trips[origin]:
                 # is the goal even reachable at all? if not, ignore for now
                 if goal in paths:

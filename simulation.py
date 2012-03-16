@@ -27,17 +27,21 @@ from time import time
 
 from osmdata import GraphBuilder
 from streetnetwork import StreetNetwork
+from persistence import persist_write
 
 # This class does the actual simulation steps
 class Simulation(object):
 
-    def __init__(self, street_network, trips, log_callback):
+    def __init__(self, street_network, trips, log_callback, persist = False):
         self.street_network = street_network
         self.trips = trips
         self.street_usage = dict()
         self.log_callback = log_callback
+        self.step_counter = 0
+        self.persist = persist
 
     def step(self):
+        self.step_counter += 1
         self.log_callback("Preparing edges...")
         for street, length, max_speed in self.street_network:
             # update driving time
@@ -60,6 +64,9 @@ class Simulation(object):
                     while current != origin:
                         self.street_usage[(current, paths[current])] += 1
                         current = paths[current]
+        if self.persist:
+            self.log_callback("Saving street usage to disk...")
+            persist_write("street_usage_" + str(self.step_counter) + ".s4mpi", self.street_usage)
 
 if __name__ == "__main__":
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# settings.py
+# persistence.py
 # Copyright 2012 Julian Fietkau <http://www.julian-fietkau.de/>
 #
 # This file is part of Streets4MPI.
@@ -20,13 +20,14 @@
 # along with Streets4MPI.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-settings = {
-    'osm_file' : 'osm/test.osm',
-    'parser_concurrency' : 4,
-    'number_of_residents' : 20,
-    'max_simulation_steps' : 5,
+import pickle
 
-    'logging' : 'stdout',
-    'persist_street_usage' : False,
-}
+# This function saves a data structure to a file
+def persist_write(filename, data):
+    file = open(filename, "w")
+    pickle.dump(data, file)
 
+# This function reads a data structure from a file
+def persist_read(filename):
+    file = open(filename, "r")
+    return pickle.load(file)

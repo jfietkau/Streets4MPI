@@ -43,7 +43,7 @@ class Streets4MPI(object):
                          data.connected_residential_nodes,
                          data.connected_commercial_nodes | data.connected_industrial_nodes)
         tm.create_trips()
-        sim = Simulation(street_network, tm.trips, self.log_indent)
+        sim = Simulation(street_network, tm.trips, self.log_indent, settings['persist_street_usage'])
         for step in range(settings['max_simulation_steps']):
             self.log("Running simulation step", step + 1, "of", settings['max_simulation_steps'], "...")
             sim.step()

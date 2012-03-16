@@ -27,6 +27,8 @@ from pygraph.algorithms.minmax import shortest_path
 class StreetNetwork(object):
     ATTRIBUTE_KEY_LENGTH = 0
     ATTRIBUTE_KEY_MAX_SPEED = 1
+    ATTRIBUTE_KEY_LATITUDE = 0
+    ATTRIBUTE_KEY_LONGITUDE = 1
 
     def __init__(self):
         # graph that holds the street network
@@ -55,7 +57,12 @@ class StreetNetwork(object):
     def set_driving_time(self, street, driving_time):
         if not self.exists_street(street): raise AssertionError("Precondition failed: exists_street(street)")
 
-        self._graph.set_edge_weight(street, driving_time)        
+        self._graph.set_edge_weight(street, driving_time)
+
+    def add_node(self, osmid, lon, lat):
+        if not self._graph.has_node(osmid):
+            self._graph.add_node(osmid, [(self.ATTRIBUTE_KEY_LONGITUDE, lon), (self.ATTRIBUTE_KEY_LATITUDE, lat)])
+        
 
     def get_nodes(self):
         return self._graph.nodes()

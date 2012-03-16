@@ -89,6 +89,9 @@ class GraphBuilder(object):
 
     def build_street_network(self):
         # construct the actual graph structure from the input data
+        for osmid in self.coords.keys():
+            coord = self.coords[osmid]
+            self.street_network.add_node(osmid, coord[self.LONGITUDE], coord[self.LATITUDE])
         for osmid, tags, refs in self.all_osm_ways.values():
             if 'highway' in tags:
                 for i in range(0, len(refs)-1):

@@ -31,22 +31,43 @@ class StreetNetwork:
         # graph that holds the street network
         self._graph = graph()
 
-    def exists_street(self, node1, node2):
-        return self._graph.has_edge((node1, node2))
+    def exists_street(self, street):
+        return self._graph.has_edge(street)
 
-    def add_street(self, node1, node2, length, max_speed):
-        if self.exists_street(node1, node2): raise AssertionError("Precondition failed: not exists_street(node1, node2)")
+    def add_street(self, street, length, max_speed):
+        if self.exists_street(street): raise AssertionError("Precondition failed: not exists_street(street)")
 
-        # add nodes if they are not in the graph
+        # add street nodes if they are not in the graph
+        node1 = street[0]
+        node2 = street[1]
         if not self._graph.has_node(node1):
             self._graph.add_node(node1)
         if not self._graph.has_node(node2):
             self._graph.add_node(node2)
         
-        # add edge to the nodes
-        edge = (node1, node2)
-        self._graph.add_edge(edge)
+        attributes = [(self.ATTRIBUTE_KEY_LENGTH, length,), (self.ATTRIBUTE_KEY_MAX_SPEED, max_speed,)]
+        # set initial weight to optimal driving time
+        weight = length / max_speed
 
-        # set attributes for the edge
-        self._graph.add_edge_attribute(edge, (self.ATTRIBUTE_KEY_LENGTH, length,))
-        self._graph.add_edge_attribute(edge, (self.ATTRIBUTE_KEY_MAX_SPEED, max_speed,))
+        self._graph.add_edge(street, wt=weight, attrs=attributes)
+
+    def set_driving_time(self, street, driving_time):
+        if not self.exists_street(street): raise AssertionError("Precondition failed: exists_street(street)")
+
+        self._graph.set_edge_weight(street, driving_time)        
+
+    # iterator to iterate over the streets and their attributes
+    def __iter__(self):
+        for street in self._graph.edges():
+            # get street attributes
+            attrs = self._graph.edge_attributes(street)
+            length = None
+            max_speed = None
+            for attr in attrs:
+                if attr[0] == StreetNetwork.ATTRIBUTE_KEY_LENGTH:
+                    length = attr[1]
+                elif attr[0] == StreetNetwork.ATTRIBUTE_KEY_MAX_SPEED:
+                    max_speed = attr[1]
+
+            yield (street, length, max_speed)
+        

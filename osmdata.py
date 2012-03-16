@@ -92,10 +92,9 @@ class GraphBuilder(object):
         for osmid, tags, refs in self.all_osm_ways.values():
             if 'highway' in tags:
                 for i in range(0, len(refs)-1):
-                    node1 = refs[i]
-                    node2 = refs[i+1]
+                    street = (refs[i], refs[i+1])
                     # calculate street length
-                    length = self.length_haversine(node1, node2)
+                    length = self.length_haversine(refs[i], refs[i+1])
                     # determine max speed
                     maxspeed = 50
                     if 'maxspeed' in tags:
@@ -106,8 +105,8 @@ class GraphBuilder(object):
                     elif tags['highway'] in self.maxspeed_map.keys():
                         maxspeed = self.maxspeed_map[tags['highway']]
                     # add street to street network
-                    if not self.street_network.exists_street(node1, node2):
-                        self.street_network.add_street(node1, node2, length, maxspeed)
+                    if not self.street_network.exists_street(street):
+                        self.street_network.add_street(street, length, maxspeed)
         return self.street_network
 
     def find_node_categories(self):

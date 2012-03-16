@@ -32,40 +32,34 @@ from streetnetwork import StreetNetwork
 class Simulation(object):
 
     def __init__(self, street_network, trips, log_callback):
-        # TODO do not access the graph directly
-        self.graph = street_network._graph
+        self.street_network = street_network
         self.trips = trips
-        self.edge_usage = dict()
+        self.street_usage = dict()
         self.log_callback = log_callback
 
     def step(self):
         self.log_callback("Preparing edges...")
-        for edge in self.graph.edges():
-            self.edge_usage[edge] = 0
-            attrs = self.graph.edge_attributes(edge)
-            length = None
-            maxspeed = None
-            for attr in attrs:
-                if attr[0] == StreetNetwork.ATTRIBUTE_KEY_LENGTH:
-                    length = attr[1]
-                if attr[0] == StreetNetwork.ATTRIBUTE_KEY_MAX_SPEED:
-                    maxspeed = attr[1]
-            if length != None and maxspeed != None:
-                expected_time = length / maxspeed
-                self.graph.set_edge_weight(edge, expected_time)
+        for street, length, max_speed in self.street_network:
+            # update driving time
+            driving_time = length / max_speed
+            self.street_network.set_driving_time(street, driving_time)
+            
+            # reset street usage
+            self.street_usage[street] = 0
         origin_nr = 0
         for origin in self.trips.keys():
             # calculate all shortest paths from resident to every other node
             origin_nr += 1
             self.log_callback("Origin nr", origin_nr, "...")
-            paths = shortest_path(self.graph, origin)[0]
+            # TODO do not access the graph directly
+            paths = shortest_path(self.street_network._graph, origin)[0]
             for goal in self.trips[origin]:
                 # is the goal even reachable at all? if not, ignore for now
                 if goal in paths:
                     # hop along the edges until we're there
                     current = goal
                     while current != origin:
-                        self.edge_usage[(current, paths[current])] += 1
+                        self.street_usage[(current, paths[current])] += 1
                         current = paths[current]
 
 if __name__ == "__main__":

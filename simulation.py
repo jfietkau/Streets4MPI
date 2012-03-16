@@ -39,6 +39,9 @@ class Simulation(object):
         self.log_callback = log_callback
         self.step_counter = 0
         self.persist = persist
+        if self.persist:
+            self.log_callback("Saving street network to disk...")
+            persist_write("street_network_" + str(self.step_counter) + ".s4mpi", self.street_network)
 
     def step(self):
         self.step_counter += 1

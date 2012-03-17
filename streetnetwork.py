@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# tripmanager.py
-# Copyright 2012 Joachim Nitschke
+# streetnetwork.py
+# Copyright 2012 Joachim Nitschke, Julian Fietkau
 #
 # This file is part of Streets4MPI.
 #
@@ -59,11 +59,11 @@ class StreetNetwork(object):
 
         self._graph.set_edge_weight(street, driving_time)
 
-    def add_node(self, osmid, lon, lat):
-        if not self._graph.has_node(osmid):
-            self._graph.add_node(osmid, [(self.ATTRIBUTE_KEY_LONGITUDE, lon), (self.ATTRIBUTE_KEY_LATITUDE, lat)])
-        
+    def add_node(self, node, lon, lat):
+        if self.exists_node(node): raise AssertionError("Precondition failed: not exists_node(node)")
 
+        self._graph.add_node(node, [(self.ATTRIBUTE_KEY_LONGITUDE, lon), (self.ATTRIBUTE_KEY_LATITUDE, lat)])
+        
     def get_nodes(self):
         return self._graph.nodes()
 

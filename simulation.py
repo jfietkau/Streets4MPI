@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 #
 # simulation.py
-# Copyright 2012 Julian Fietkau <http://www.julian-fietkau.de/>
+# Copyright 2012 Julian Fietkau <http://www.julian-fietkau.de/>, 
+# Joachim Nitschke
 #
 # This file is part of Streets4MPI.
 #
@@ -19,9 +20,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Streets4MPI.  If not, see <http://www.gnu.org/licenses/>.
 #
-
-from pygraph.classes.graph import graph
-from pygraph.algorithms.minmax import shortest_path
 
 from time import time
 
@@ -72,23 +70,22 @@ class Simulation(object):
             persist_write("street_usage_" + str(self.step_counter) + ".s4mpi", self.street_usage)
 
 if __name__ == "__main__":
-
     def out(*output):
         for o in output:
             print o,
         print ''
 
-    graph = graph()
-    graph.add_nodes([1,2,3])
-    graph.add_edge((1,2,))
-    graph.add_edge((2,3,))
-    graph.add_edge_attributes((1,2,), [(0, 10,), (1, 50,)])
-    graph.add_edge_attributes((2,3,), [(0, 100,), (1, 140,)])
+    street_network = StreetNetwork()
+    street_network.add_node(1,0,0)
+    street_network.add_node(2,0,0)
+    street_network.add_node(3,0,0)
+    street_network.add_street((1,2,),10,50)
+    street_network.add_street((2,3,),100,140)
 
     trips = dict()
     trips[1] = [3]
 
-    sim = Simulation(graph, trips, out)
+    sim = Simulation(street_network, trips, out)
     for step in range(10):
         print "Running simulation step", step+1, "of 10..."
         sim.step()

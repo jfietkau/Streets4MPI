@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 #
 # osmdata.py
-# Copyright 2012 Julian Fietkau <http://www.julian-fietkau.de/>
+# Copyright 2012 Julian Fietkau <http://www.julian-fietkau.de/>,
+# Joachim Nitschke
 #
 # This file is part of Streets4MPI.
 #
@@ -21,8 +22,6 @@
 #
 
 from imposm.parser import OSMParser
-
-from pygraph.classes.graph import graph
 
 from math import sqrt, radians, sin, cos, asin
 from time import time
@@ -90,14 +89,18 @@ class GraphBuilder(object):
     def build_street_network(self):
         # construct the actual graph structure from the input data
         for osmid in self.coords.keys():
-            coord = self.coords[osmid]
-            self.street_network.add_node(osmid, coord[self.LONGITUDE], coord[self.LATITUDE])
+            if not self.street_network.has_node(osmid):
+                coord = self.coords[osmid]
+                self.street_network.add_node(osmid, coord[self.LONGITUDE], coord[self.LATITUDE])
+
         for osmid, tags, refs in self.all_osm_ways.values():
             if 'highway' in tags:
                 for i in range(0, len(refs)-1):
                     street = (refs[i], refs[i+1])
+
                     # calculate street length
                     length = self.length_haversine(refs[i], refs[i+1])
+
                     # determine max speed
                     max_speed = 50
                     if 'maxspeed' in tags:
@@ -107,9 +110,11 @@ class GraphBuilder(object):
                             max_speed = 140
                     elif tags['highway'] in self.max_speed_map.keys():
                         max_speed = self.max_speed_map[tags['highway']]
+
                     # add street to street network
-                    if not self.street_network.exists_street(street):
+                    if not self.street_network.has_street(street):
                         self.street_network.add_street(street, length, max_speed)
+
         return self.street_network
 
     def find_node_categories(self):

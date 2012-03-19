@@ -26,13 +26,21 @@ from PIL import Image, ImageDraw
 from streetnetwork import StreetNetwork
 from persistence import persist_read
 
+from pygraph.algorithms.accessibility import connected_components
+
 # This class turns persistent street usage data into images
 class Visualization(object):
 
     ATTRIBUTE_KEY_LATITUDE = 0
     ATTRIBUTE_KEY_LONGITUDE = 1
+    ATTRIBUTE_KEY_COMPONENT = 2
 
-    def __init__(self, street_network_filename, street_usage_filename):
+    MODE_COMPONENTS = 'MODE_COMPONENTS'
+    MODE_USAGE      = 'MODE_USAGE'
+
+    def __init__(self, street_network_filename, street_usage_filename, mode):
+        print "Welcome to Streets4MPI visualization!"
+        print "Initializing data structures..."
         self.step_counter = 0
         self.street_network_files = glob.glob(street_network_filename)
         self.street_usage_files = glob.glob(street_usage_filename)
@@ -44,10 +52,13 @@ class Visualization(object):
         self.street_network = None
         self.street_usage = None
         self.node_coords = dict()
+        self.mode = mode
 
     def step(self):
 
+        print "Step counter", self.step_counter
         if "street_network_"+str(self.step_counter)+".s4mpi" in self.street_network_files:
+            print "  Found street network data, reading..."
             self.street_network = persist_read("street_network_"+str(self.step_counter)+".s4mpi")
             self.bounds = self.street_network.bounds
             self.street_network_im = Image.new("RGBA", self.max_resolution, (0, 0, 0, 255))
@@ -57,22 +68,36 @@ class Visualization(object):
                 attrs = dict(self.street_network.get_node_attributes(node))
                 point = dict()
                 for i in range(2):
-                    point[i] = (attrs[i] - self.bounds[i][0]) * self.coord2km[i]
-                self.node_coords[node] = (point[0]*self.zoom, point[1]*self.zoom)
+                    point[i] = (attrs[i] - self.bounds[i][0]) * self.coord2km[i] * self.zoom
+                self.node_coords[node] = (point[0], point[1])
+            if self.mode == Visualization.MODE_COMPONENTS:
+                  self.calculate_components(self.street_network._graph)
 
         if "street_usage_"+str(self.step_counter)+".s4mpi" in self.street_usage_files:
+            print "  Found street usage data, reading and drawing..."
             self.street_usage = persist_read("street_usage_"+str(self.step_counter)+".s4mpi")
             draw = ImageDraw.Draw(self.street_network_im)
-            for street in self.street_network:
-                edge = street[0]
-                draw.line([self.node_coords[edge[0]], self.node_coords[edge[1]]], fill=(255,0,0,0))
+            usage = 0
+            for street, length, max_speed in self.street_network:
+                if self.mode == Visualization.MODE_USAGE:
+                    brightness = min(255, 55+1*self.street_usage[street])
+                    color = (brightness, 0, 0, 0)
+                if self.mode == Visualization.MODE_COMPONENTS:
+                    component = dict(self.street_network._graph.edge_attributes(street))[2]
+                    color = "hsl(" + str(40*component) + ",100%,50%)"
+                draw.line([self.node_coords[street[0]], self.node_coords[street[1]]], fill=color)
             self.street_network_im.show()
 
         self.step_counter += 1
 
+    def calculate_components(self, graph):
+        components = connected_components(graph)
+        for edge in graph.edges():
+            graph.add_edge_attribute(edge, (Visualization.ATTRIBUTE_KEY_COMPONENT, max(components[edge[0]], components[edge[1]])))
+
 if __name__ == "__main__":
 
-    vis = Visualization("street_network_*.s4mpi", "street_usage_*.s4mpi")
+    vis = Visualization("street_network_*.s4mpi", "street_usage_*.s4mpi", Visualization.MODE_COMPONENT)
     vis.step()
     vis.step()
 

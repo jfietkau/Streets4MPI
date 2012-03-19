@@ -65,7 +65,6 @@ class Visualization(object):
             draw = ImageDraw.Draw(self.street_network_im)
             for street in self.street_network:
                 edge = street[0]
-                print self.node_coords[edge[0]]
                 draw.line([self.node_coords[edge[0]], self.node_coords[edge[1]]], fill=(255,0,0,0))
             self.street_network_im.show()
 

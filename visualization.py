@@ -22,6 +22,7 @@
 
 import glob
 from PIL import Image, ImageDraw
+from math import floor
 
 from streetnetwork import StreetNetwork
 from persistence import persist_read
@@ -84,7 +85,7 @@ class Visualization(object):
                     color = (brightness, 0, 0, 0)
                 if self.mode == Visualization.MODE_COMPONENTS:
                     component = dict(self.street_network._graph.edge_attributes(street))[2]
-                    color = "hsl(" + str(math.floor(137.5*component)) + ",100%,50%)"
+                    color = "hsl(" + str(int(137.5*component) % 360) + ",100%,50%)"
                 draw.line([self.node_coords[street[0]], self.node_coords[street[1]]], fill=color)
             self.street_network_im.show()
 

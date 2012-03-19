@@ -26,7 +26,8 @@ from imposm.parser import OSMParser
 from math import sqrt, radians, sin, cos, asin
 from time import time
 
-from streetnetwork import StreetNetwork 
+from streetnetwork import StreetNetwork
+from pygraph.algorithms.accessibility import connected_components
 
 # This class reads an OSM file and builds a graph out of it
 class GraphBuilder(object):
@@ -100,14 +101,16 @@ class GraphBuilder(object):
                                            self.bounds['min_lon'], self.bounds['max_lon'])
 
         # construct the actual graph structure from the input data
-        for osmid in self.coords.keys():
-            if not self.street_network.has_node(osmid):
-                coord = self.coords[osmid]
-                self.street_network.add_node(osmid, coord[self.LONGITUDE], coord[self.LATITUDE])
-
         for osmid, tags, refs in self.all_osm_ways.values():
             if 'highway' in tags:
+                if not self.street_network.has_node(refs[0]):
+                    coord = self.coords[refs[0]]
+                    self.street_network.add_node(refs[0], coord[self.LONGITUDE], coord[self.LATITUDE])
                 for i in range(0, len(refs)-1):
+                    if not self.street_network.has_node(refs[i+1]):
+                        coord = self.coords[refs[i+1]]
+                        self.street_network.add_node(refs[i+1], coord[self.LONGITUDE], coord[self.LATITUDE])
+
                     street = (refs[i], refs[i+1])
 
                     # calculate street length

@@ -43,24 +43,37 @@ class Visualization(object):
         self.background = Image.new("RGB", self.max_resolution)
         self.street_network = None
         self.street_usage = None
+        self.node_coords = dict()
 
     def step(self):
+
         if "street_network_"+str(self.step_counter)+".s4mpi" in self.street_network_files:
             self.street_network = persist_read("street_network_"+str(self.step_counter)+".s4mpi")
             self.bounds = self.street_network.bounds
             self.street_network_im = Image.new("RGBA", self.max_resolution, (0, 0, 0, 255))
-            draw = ImageDraw.Draw(self.street_network_im)
+            self.zoom = 600 / max((self.bounds[0][1] - self.bounds[0][0]) * self.coord2km[0],
+                                  (self.bounds[1][1] - self.bounds[1][0]) * self.coord2km[1])
             for node in self.street_network.get_nodes():
                 attrs = dict(self.street_network.get_node_attributes(node))
                 point = dict()
                 for i in range(2):
                     point[i] = (attrs[i] - self.bounds[i][0]) * self.coord2km[i]
-                self.zoom = 600 / max((self.bounds[0][1] - self.bounds[0][0]) * self.coord2km[0],
-                                      (self.bounds[1][1] - self.bounds[1][0]) * self.coord2km[1])
-                draw.point([point[0]*self.zoom, 600-point[1]*self.zoom], fill=(255,0,0,0))
+                self.node_coords[node] = (point[0]*self.zoom, point[1]*self.zoom)
+
+        if "street_usage_"+str(self.step_counter)+".s4mpi" in self.street_usage_files:
+            self.street_usage = persist_read("street_usage_"+str(self.step_counter)+".s4mpi")
+            draw = ImageDraw.Draw(self.street_network_im)
+            for street in self.street_network:
+                edge = street[0]
+                print self.node_coords[edge[0]]
+                draw.line([self.node_coords[edge[0]], self.node_coords[edge[1]]], fill=(255,0,0,0))
             self.street_network_im.show()
+
+        self.step_counter += 1
 
 if __name__ == "__main__":
 
     vis = Visualization("street_network_*.s4mpi", "street_usage_*.s4mpi")
     vis.step()
+    vis.step()
+

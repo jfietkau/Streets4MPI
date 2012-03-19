@@ -84,7 +84,7 @@ class Visualization(object):
                     color = (brightness, 0, 0, 0)
                 if self.mode == Visualization.MODE_COMPONENTS:
                     component = dict(self.street_network._graph.edge_attributes(street))[2]
-                    color = "hsl(" + str(40*component) + ",100%,50%)"
+                    color = "hsl(" + str(math.floor(137.5*component)) + ",100%,50%)"
                 draw.line([self.node_coords[street[0]], self.node_coords[street[1]]], fill=color)
             self.street_network_im.show()
 
@@ -97,7 +97,7 @@ class Visualization(object):
 
 if __name__ == "__main__":
 
-    vis = Visualization("street_network_*.s4mpi", "street_usage_*.s4mpi", Visualization.MODE_COMPONENT)
+    vis = Visualization("street_network_*.s4mpi", "street_usage_*.s4mpi", Visualization.MODE_COMPONENTS)
     vis.step()
     vis.step()
 

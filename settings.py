@@ -23,10 +23,11 @@
 settings = {
     'osm_file' : 'osm/test.osm',
     'parser_concurrency' : 4,
-    'number_of_residents' : 20,
-    'max_simulation_steps' : 5,
+    'number_of_residents' : 50,
+    'max_simulation_steps' : 1,
 
     'logging' : 'stdout',
-    'persist_street_usage' : False,
+    'persist_street_usage' : True,
+    'use_landuse_values' : False,
 }
 

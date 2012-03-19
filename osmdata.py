@@ -27,7 +27,6 @@ from math import sqrt, radians, sin, cos, asin
 from time import time
 
 from streetnetwork import StreetNetwork
-from pygraph.algorithms.accessibility import connected_components
 
 # This class reads an OSM file and builds a graph out of it
 class GraphBuilder(object):

@@ -33,6 +33,7 @@ class StreetNetwork(object):
     def __init__(self):
         # graph that holds the street network
         self._graph = graph()
+        self.bounds = None
 
     def has_street(self, street):
         return self._graph.has_edge(street)
@@ -52,6 +53,9 @@ class StreetNetwork(object):
         if not self.has_street(street): raise AssertionError("Precondition failed: has_street(street)")
 
         self._graph.set_edge_weight(street, driving_time)
+
+    def set_bounds(self, min_lat, max_lat, min_lon, max_lon):
+        self.bounds = ((min_lat, max_lat), (min_lon, max_lon))
 
     def add_node(self, node, lon, lat):
         if self.has_node(node): raise AssertionError("Precondition failed: not has_node(node)")

@@ -43,6 +43,13 @@ class GraphBuilder(object):
         # coord pairs as returned from imposm
         self.coords = dict()
 
+        # max and min latitude and longitude
+        self.bounds = dict()
+        self.bounds['min_lat'] = 9999
+        self.bounds['max_lat'] = -9999
+        self.bounds['min_lon'] = 9999
+        self.bounds['max_lon'] = -9999
+
         # active copy of OSM data indexed by OSM id
         self.all_osm_relations = dict()
         self.all_osm_ways = dict()
@@ -87,6 +94,11 @@ class GraphBuilder(object):
         p.parse(osmfile)
 
     def build_street_network(self):
+        # add boundaries to street network
+        if 9999 not in self.bounds.values() and -9999 not in self.bounds.values():
+            self.street_network.set_bounds(self.bounds['min_lat'], self.bounds['max_lat'], 
+                                           self.bounds['min_lon'], self.bounds['max_lon'])
+
         # construct the actual graph structure from the input data
         for osmid in self.coords.keys():
             if not self.street_network.has_node(osmid):
@@ -153,6 +165,10 @@ class GraphBuilder(object):
     def coords_callback(self, coords):
         for osmid, lon, lat in coords:
             self.coords[osmid] = dict([(self.LATITUDE, lat), (self.LONGITUDE, lon)])
+            self.bounds["min_lat"] = min(self.bounds["min_lat"], lat)
+            self.bounds["min_lon"] = min(self.bounds["min_lon"], lon)
+            self.bounds["max_lat"] = max(self.bounds["max_lat"], lat)
+            self.bounds["max_lon"] = max(self.bounds["max_lon"], lon)
 
     def nodes_callback(self, nodes):
         for node in nodes:

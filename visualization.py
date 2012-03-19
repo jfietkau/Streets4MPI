@@ -78,11 +78,11 @@ class Visualization(object):
             print "  Found street usage data, reading and drawing..."
             self.street_usage = persist_read("street_usage_"+str(self.step_counter)+".s4mpi")
             draw = ImageDraw.Draw(self.street_network_im)
-            usage = 0
+            max_usage = self.find_max_usage()
             for street, length, max_speed in self.street_network:
                 if self.mode == Visualization.MODE_USAGE:
-                    brightness = min(255, 55+1*self.street_usage[street])
-                    color = (brightness, 0, 0, 0)
+                    brightness = min(255, 15+240*self.street_usage[street]/max_usage)
+                    color = (brightness, brightness, brightness, 0)
                 if self.mode == Visualization.MODE_COMPONENTS:
                     component = dict(self.street_network._graph.edge_attributes(street))[2]
                     color = "hsl(" + str(int(137.5*component) % 360) + ",100%,50%)"
@@ -96,9 +96,15 @@ class Visualization(object):
         for edge in graph.edges():
             graph.add_edge_attribute(edge, (Visualization.ATTRIBUTE_KEY_COMPONENT, max(components[edge[0]], components[edge[1]])))
 
+    def find_max_usage(self):
+        usage = 0
+        for street in self.street_network:
+            usage = max(usage, self.street_usage[street[0]])
+        return usage
+
 if __name__ == "__main__":
 
-    vis = Visualization("street_network_*.s4mpi", "street_usage_*.s4mpi", Visualization.MODE_COMPONENTS)
+    vis = Visualization("street_network_*.s4mpi", "street_usage_*.s4mpi", Visualization.MODE_USAGE)
     vis.step()
     vis.step()
 

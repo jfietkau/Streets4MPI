@@ -61,6 +61,9 @@ class StreetNetwork(object):
     def get_nodes(self):
         return self._graph.nodes()
 
+    def get_node_attributes(self, node):
+        return self._graph.node_attributes(node)
+
     def has_node(self, node):
         return self._graph.has_node(node)
 

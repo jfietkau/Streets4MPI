@@ -95,6 +95,7 @@ class Visualization(object):
 
             for street, length, max_speed in self.street_network:
                 color = (255, 255, 255, 0) # default: white
+                width = max_speed / 50
                 if self.mode == 'AMOUNT':
                     if self.color_mode == 'MONOCHROME':
                         brightness = min(255, 15+240*self.street_usage[street]/max_usage)
@@ -104,7 +105,7 @@ class Visualization(object):
                 if self.mode == 'COMPONENTS':
                     component = dict(self.street_network._graph.edge_attributes(street))[Visualization.ATTRIBUTE_KEY_COMPONENT]
                     color = "hsl(" + str(int(137.5*component) % 360) + ",100%,50%)"
-                draw.line([self.node_coords[street[0]], self.node_coords[street[1]]], fill=color)
+                draw.line([self.node_coords[street[0]], self.node_coords[street[1]]], fill=color, width=width)
 
             self.street_network_im.save("street_usage_"+str(self.step_counter)+".png")
 

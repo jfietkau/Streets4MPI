@@ -48,8 +48,9 @@ class Visualization(object):
     # HEATMAP    - vary hue on a temperature-inspired scale from dark blue to red
     # MONOCHROME - vary brightness from black to white
 
-    def __init__(self, street_network_filename, street_usage_filename, mode = 'AMOUNT', color_mode = 'HEATMAP'):
+    def __init__(self, street_network_filename, street_usage_filename, mode = 'USAGE', color_mode = 'HEATMAP'):
         print "Welcome to Streets4MPI visualization!"
+        print "Current display mode:", mode, "with color mode", color_mode
         print "Initializing data structures..."
         self.step_counter = 0
         self.street_network_files = glob.glob(street_network_filename)
@@ -64,6 +65,9 @@ class Visualization(object):
         self.node_coords = dict()
         self.mode = mode
         self.color_mode = color_mode
+
+    def finalize(self):
+        print "Done!"
 
     def step(self):
 
@@ -93,13 +97,19 @@ class Visualization(object):
             self.street_usage = persist_read("street_usage_"+str(self.step_counter)+".s4mpi")
             draw = ImageDraw.Draw(self.street_network_im)
 
+            if self.mode == 'AMOUNT':
+                max_amount = self.find_max_amount()
+            if self.mode == 'USAGE':
+                max_usage = self.find_max_usage()
+
             for street, length, max_speed in self.street_network:
                 color = (255, 255, 255, 0) # default: white
                 width = max_speed / 50
                 value = 0
                 if self.mode == 'AMOUNT':
-                    max_usage = self.find_max_usage()
-                    value = 1.0 * self.street_usage[street] / max_usage
+                    value = 1.0 * self.street_usage[street] / max_amount
+                if self.mode == 'USAGE':
+                    value = min(1.0, 5 * (1.0 * self.street_usage[street]) / (max_speed * max_usage))
                 if self.mode == 'MAXSPEED':
                     value = min(1.0, 1.0 * max_speed / 140)
                 if self.color_mode == 'MONOCHROME':
@@ -121,10 +131,16 @@ class Visualization(object):
         for edge in graph.edges():
             graph.add_edge_attribute(edge, (Visualization.ATTRIBUTE_KEY_COMPONENT, max(components[edge[0]], components[edge[1]])))
 
+    def find_max_amount(self):
+        amount = 0
+        for street, length, max_speed in self.street_network:
+            amount = max(amount, self.street_usage[street])
+        return amount
+
     def find_max_usage(self):
         usage = 0
-        for street in self.street_network:
-            usage = max(usage, self.street_usage[street[0]])
+        for street, length, max_speed in self.street_network:
+            usage = max(usage, 1.0*self.street_usage[street]/max_speed)
         return usage
 
     def value_to_heatmap_color(self, value):
@@ -139,4 +155,5 @@ if __name__ == "__main__":
     vis = Visualization("street_network_*.s4mpi", "street_usage_*.s4mpi")
     vis.step()
     vis.step()
+    vis.finalize()
 

@@ -43,7 +43,7 @@ class StreetNetwork(object):
         if not self.has_node(street[1]): raise AssertionError("Precondition failed: has_node(street[1])")
         if self.has_street(street): raise AssertionError("Precondition failed: not has_street(street)")
 
-        attributes = [(self.ATTRIBUTE_KEY_LENGTH, length,), (self.ATTRIBUTE_KEY_MAX_SPEED, max_speed,)]
+        attributes = [(self.ATTRIBUTE_KEY_LENGTH, length), (self.ATTRIBUTE_KEY_MAX_SPEED, max_speed)]
         # set initial weight to optimal driving time
         weight = length / max_speed
 
@@ -79,15 +79,10 @@ class StreetNetwork(object):
     # iterator to iterate over the streets and their attributes
     def __iter__(self):
         for street in self._graph.edges():
+            if street[0] > street[1]:
+                street = (street[1], street[0])
             # get street attributes
-            attrs = self._graph.edge_attributes(street)
-            length = None
-            max_speed = None
-            for attr in attrs:
-                if attr[0] == StreetNetwork.ATTRIBUTE_KEY_LENGTH:
-                    length = attr[1]
-                elif attr[0] == StreetNetwork.ATTRIBUTE_KEY_MAX_SPEED:
-                    max_speed = attr[1]
+            attrs = dict(self._graph.edge_attributes(street))
 
-            yield (street, length, max_speed)
+            yield (street, attrs[StreetNetwork.ATTRIBUTE_KEY_LENGTH], attrs[StreetNetwork.ATTRIBUTE_KEY_MAX_SPEED])
         

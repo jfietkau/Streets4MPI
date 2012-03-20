@@ -55,7 +55,7 @@ class Visualization(object):
         self.step_counter = 0
         self.street_network_files = glob.glob(street_network_filename)
         self.street_usage_files = glob.glob(street_usage_filename)
-        self.max_resolution = (4000, 4000)
+        self.max_resolution = (2000, 2000)
         self.zoom = 1
         self.coord2km = (111.32, 66.4) # distances between 2 deg of lat/lon
         self.bounds = None
@@ -162,13 +162,16 @@ class Visualization(object):
         legend = Image.new("RGBA", self.street_network_im.size, (0,0,0,255))
         font = ImageFont.load_default()
         draw = ImageDraw.Draw(legend)
-        bar_outer_width = 60
-        bar_inner_width = 50
-        bar_offset = (bar_outer_width - bar_inner_width) / 2
+        bar_outer_width = self.max_resolution[0] / 50
+        bar_inner_width = min(bar_outer_width - 4, int(bar_outer_width * 0.85))
+        # make sure the difference is a multiple of 4
+        bar_inner_width = bar_inner_width - (bar_outer_width - bar_inner_width) % 4
+        bar_offset = max(2, int(bar_outer_width - bar_inner_width) / 2)
 
         if self.mode in ['USAGE', 'AMOUNT', 'MAXSPEED']:
-            draw.rectangle([(0, 0), (bar_outer_width, legend.size[1])], fill = white)
-            draw.rectangle([(bar_offset/2, bar_offset/2), (bar_outer_width-bar_offset/2, legend.size[1]-bar_offset/2)], fill = black)
+            draw.rectangle([(0, 0), (bar_outer_width, legend.size[1]-1)], fill = white)
+            border_width = int(bar_offset / 2)
+            draw.rectangle([(border_width, border_width), (bar_outer_width-border_width, legend.size[1]-1-border_width)], fill = black)
             for y in xrange(bar_offset, legend.size[1]-bar_offset):
                 value = 1.0 * (y - bar_offset) / (legend.size[1] - 2 * bar_offset)
                 color = self.value_to_color(1.0 - value) # highest value at the top

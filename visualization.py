@@ -42,6 +42,7 @@ class Visualization(object):
     # COMPONENTS - display connected components
     # USAGE      - display relative street usage
     # AMOUNT     - display absolute street usage
+    # MAXSPEED   - display local speed limits
 
     # Colors:
     # HEATMAP    - vary hue on a temperature-inspired scale from dark blue to red
@@ -91,17 +92,21 @@ class Visualization(object):
             print "  Found street usage data, reading and drawing..."
             self.street_usage = persist_read("street_usage_"+str(self.step_counter)+".s4mpi")
             draw = ImageDraw.Draw(self.street_network_im)
-            max_usage = self.find_max_usage()
 
             for street, length, max_speed in self.street_network:
                 color = (255, 255, 255, 0) # default: white
                 width = max_speed / 50
+                value = 0
                 if self.mode == 'AMOUNT':
-                    if self.color_mode == 'MONOCHROME':
-                        brightness = min(255, 15+240*self.street_usage[street]/max_usage)
-                        color = (brightness, brightness, brightness, 0)
-                    if self.color_mode == 'HEATMAP':
-                        color = self.value_to_heatmap_color(1.0*self.street_usage[street]/max_usage)
+                    max_usage = self.find_max_usage()
+                    value = 1.0 * self.street_usage[street] / max_usage
+                if self.mode == 'MAXSPEED':
+                    value = min(1.0, 1.0 * max_speed / 140)
+                if self.color_mode == 'MONOCHROME':
+                    brightness = min(255, 15 + 240 * value)
+                    color = (brightness, brightness, brightness, 0)
+                if self.color_mode == 'HEATMAP':
+                    color = self.value_to_heatmap_color(value)
                 if self.mode == 'COMPONENTS':
                     component = dict(self.street_network._graph.edge_attributes(street))[Visualization.ATTRIBUTE_KEY_COMPONENT]
                     color = "hsl(" + str(int(137.5*component) % 360) + ",100%,50%)"

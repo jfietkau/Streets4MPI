@@ -76,7 +76,9 @@ class Visualization(object):
 
     def step(self):
 
+        self.step_counter += 1
         print "Step counter", self.step_counter
+
         if "street_network_"+str(self.step_counter)+".s4mpi" in self.street_network_files:
 
             print "  Found street network data, reading..."
@@ -130,8 +132,6 @@ class Visualization(object):
             self.street_network_im.save("street_usage_"+str(self.step_counter)+".png")
 
             self.street_usage_files.remove("street_usage_"+str(self.step_counter)+".s4mpi")
-
-        self.step_counter += 1
 
     def calculate_components(self, graph):
         components = connected_components(graph)

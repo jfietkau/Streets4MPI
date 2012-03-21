@@ -20,7 +20,8 @@
 # along with Streets4MPI.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import glob
+import re
+from os import listdir
 from PIL import Image, ImageChops, ImageDraw, ImageFont
 from math import floor
 from datetime import datetime
@@ -53,18 +54,22 @@ class Visualization(object):
         print "Current display mode:", mode, "with color mode", color_mode
         print "Initializing data structures..."
         self.step_counter = 0
-        self.street_network_files = glob.glob(street_network_filename)
-        self.street_usage_files = glob.glob(street_usage_filename)
         self.max_resolution = (2000, 2000)
         self.zoom = 1
         self.coord2km = (111.32, 66.4) # distances between 2 deg of lat/lon
         self.bounds = None
-        self.background = Image.new("RGB", self.max_resolution)
         self.street_network = None
         self.street_usage = None
         self.node_coords = dict()
         self.mode = mode
         self.color_mode = color_mode
+
+        all_files = listdir('.')
+        
+        regex_network = re.compile(street_network_filename)
+        regex_usage = re.compile(street_usage_filename)
+        self.street_network_files = filter(regex_network.search, all_files)
+        self.street_usage_files = filter(regex_usage.search, all_files)
 
     def finalize(self):
         print "Done!"
@@ -90,6 +95,8 @@ class Visualization(object):
 
             if self.mode == 'COMPONENTS':
                   self.calculate_components(self.street_network._graph)
+
+            self.street_network_files.remove("street_network_"+str(self.step_counter)+".s4mpi")
 
         if "street_usage_"+str(self.step_counter)+".s4mpi" in self.street_usage_files:
 
@@ -121,6 +128,8 @@ class Visualization(object):
             self.image_finalize()
             print "  Saving image to disk (street_usage_"+str(self.step_counter)+".png) ..."
             self.street_network_im.save("street_usage_"+str(self.step_counter)+".png")
+
+            self.street_usage_files.remove("street_usage_"+str(self.step_counter)+".s4mpi")
 
         self.step_counter += 1
 
@@ -212,8 +221,10 @@ class Visualization(object):
 
 if __name__ == "__main__":
 
-    vis = Visualization("street_network_*.s4mpi", "street_usage_*.s4mpi")
-    vis.step()
-    vis.step()
+    vis = Visualization("^street_network_[0-9]+.s4mpi$", "^street_usage_[0-9]+.s4mpi$")
+
+    while len(vis.street_network_files + vis.street_usage_files) > 0:
+        vis.step()
+
     vis.finalize()
 

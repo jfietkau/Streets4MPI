@@ -46,7 +46,7 @@ class Simulation(object):
 
         if self.persist:
             self.log_callback("Saving street network to disk...")
-            persist_write("street_network_" + str(self.step_counter) + ".s4mpi", self.street_network)
+            persist_write("street_network_1.s4mpi", self.street_network)
 
     def step(self):
         self.step_counter += 1
@@ -72,7 +72,8 @@ class Simulation(object):
                     # hop along the edges until we're there
                     current = goal
                     while current != origin:
-                        self.street_usage[(current, paths[current])] += 1
+                        street = (min(current, paths[current]), max(current, paths[current]))
+                        self.street_usage[street] += 1
                         current = paths[current]
 
         if self.persist:

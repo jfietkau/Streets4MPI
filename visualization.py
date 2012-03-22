@@ -84,7 +84,6 @@ class Visualization(object):
             print "  Found street network data, reading..."
             self.street_network = persist_read("street_network_"+str(self.step_counter)+".s4mpi")
             self.bounds = self.street_network.bounds
-            self.street_network_im = Image.new("RGBA", self.max_resolution, (0, 0, 0, 255))
             self.zoom = self.max_resolution[0] / max((self.bounds[0][1] - self.bounds[0][0]) * self.coord2km[0],
                                   (self.bounds[1][1] - self.bounds[1][0]) * self.coord2km[1])
 
@@ -93,7 +92,7 @@ class Visualization(object):
                 point = dict()
                 for i in range(2):
                     point[i] = (attrs[i] - self.bounds[i][0]) * self.coord2km[i] * self.zoom
-                self.node_coords[node] = (point[0], point[1])
+                self.node_coords[node] = (point[1], self.max_resolution[1] - point[0]) # x = longitude, y = latitude
 
             if self.mode == 'COMPONENTS':
                   self.calculate_components(self.street_network._graph)
@@ -104,6 +103,7 @@ class Visualization(object):
 
             print "  Found street usage data, reading and drawing..."
             self.street_usage = persist_read("street_usage_"+str(self.step_counter)+".s4mpi")
+            self.street_network_im = Image.new("RGBA", self.max_resolution, (0, 0, 0, 255))
             draw = ImageDraw.Draw(self.street_network_im)
 
             if self.mode == 'AMOUNT':

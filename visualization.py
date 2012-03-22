@@ -141,13 +141,13 @@ class Visualization(object):
     def find_max_amount(self):
         amount = 0
         for street, length, max_speed in self.street_network:
-            amount = max(amount, self.street_usage[street])
+            amount = max(amount, 1.0 * self.street_usage[street])
         return amount
 
     def find_max_usage(self):
         usage = 0
         for street, length, max_speed in self.street_network:
-            usage = max(usage, 1.0*self.street_usage[street]/max_speed)
+            usage = max(usage, 1.0 * self.street_usage[street] / max_speed)
         return usage
 
     def value_to_color(self, value):
@@ -186,10 +186,10 @@ class Visualization(object):
                 color = self.value_to_color(1.0 - value) # highest value at the top
                 draw.line([(bar_offset, y), (bar_offset + bar_inner_width, y)], fill=color)
             if self.mode == 'AMOUNT':
-                top_text = str(self.find_max_amount())+ " cars per street segment"
-                bottom_text = "0 cars per street segment"
+                top_text = str(round(self.find_max_amount(), 1))+ " cars gone through"
+                bottom_text = "0 cars gone through"
             if self.mode == 'USAGE':
-                top_text = str(self.find_max_usage())+ " car density (cars per allowed km/h)"
+                top_text = str(round(self.find_max_usage(), 1))+ " car density (cars per allowed km/h)"
                 bottom_text = "0 car density (cars per allowed km/h)"
             if self.mode == 'MAXSPEED':
                 top_text = "speed limit: 140 km/h or higher"

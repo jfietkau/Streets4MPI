@@ -46,7 +46,7 @@ class TripManager(object):
             self.trips[source] = goals
 
 if __name__ == "__main__":
-    manager = TripManager(30, {1, 2, 3, 4, 5}, {6, 7, 8, 9, 10})
+    manager = TripManager(30, set([1, 2, 3, 4, 5]), set([6, 7, 8, 9, 10]))
 
     start = time()
 

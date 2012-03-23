@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# tripmanager.py
+# tripgenerator.py
 # Copyright 2012 Julian Fietkau <http://www.julian-fietkau.de/>
 #
 # This file is part of Streets4MPI.
@@ -24,26 +24,22 @@ from random import sample
 from time import time
 
 # This class creates the appropriate number of residents and manages the trips
-class TripManager(object):
+class TripGenerator(object):
 
-    def __init__(self, number_of_residents, sources, targets):
-        print sources
-        self.number = number_of_residents
-        self.sources = sources
-        self.targets = targets
-        self.trips = dict()
-
-    def create_trips(self):
-        self.trips = dict()
-        for i in range(0, self.number):
-            source = sample(self.sources, 1)[0]
-            target = sample(self.targets, 1)[0]
-            if source in self.trips.keys():
-                goals = self.trips[source]
+    def generate_trips(self, number_of_residents, potential_origins, potential_goals):
+        trips = dict()
+        
+        for i in range(0, number_of_residents):
+            origin = sample(potential_origins, 1)[0]
+            goal = sample(potential_goals, 1)[0]
+            if origin in trips.keys():
+                goals = trips[origin]
             else:
                 goals = list()
-            goals.append(target)
-            self.trips[source] = goals
+            goals.append(goal)
+            trips[origin] = goals
+
+        return trips
 
 if __name__ == "__main__":
     manager = TripManager(30, set([1, 2, 3, 4, 5]), set([6, 7, 8, 9, 10]))

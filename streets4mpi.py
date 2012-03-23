@@ -24,7 +24,7 @@
 from datetime import datetime
 
 from osmdata import GraphBuilder
-from tripmanager import TripManager
+from tripgenerator import TripGenerator
 from simulation import Simulation
 from settings import settings
 
@@ -35,16 +35,24 @@ class Streets4MPI(object):
         self.log("Welcome to Streets4MPI!")
         self.log("Reading OpenStreetMap data...")
         data = GraphBuilder(settings['osm_file'], settings['parser_concurrency'])
+
         self.log("Building street network...")
         street_network = data.build_street_network()
+
         self.log("Locating area types...")
         data.find_node_categories()
+
         self.log("Generating trips...")
-        tm = TripManager(settings['number_of_residents'],
-                         data.connected_residential_nodes,
-                         data.connected_commercial_nodes | data.connected_industrial_nodes)
-        tm.create_trips()
-        sim = Simulation(street_network, tm.trips, self.log_indent, settings['persist_street_usage'])
+        trip_generator = TripGenerator()
+        number_of_residents = settings['number_of_residents']
+        if settings['use_residential_nodes_as_origins']:
+            potential_origins = data.connected_residential_nodes
+        else:
+            potential_origins = street_network.get_nodes()
+        potential_goals = data.connected_commercial_nodes | data.connected_industrial_nodes
+        trips = trip_generator.generate_trips(number_of_residents, potential_origins, potential_goals)
+
+        sim = Simulation(street_network, trips, self.log_indent, settings['persist_street_usage'])
         for step in range(settings['max_simulation_steps']):
             self.log("Running simulation step", step + 1, "of", settings['max_simulation_steps'], "...")
             sim.step()

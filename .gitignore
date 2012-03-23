@@ -5,6 +5,11 @@
 # Except a small test file
 !test.osm
 
+# Visualization files #
+#######################
+*.s4mpi
+*.png
+
 # Compiled source #
 ###################
 *.pyc

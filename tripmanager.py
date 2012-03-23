@@ -27,6 +27,7 @@ from time import time
 class TripManager(object):
 
     def __init__(self, number_of_residents, sources, targets):
+        print sources
         self.number = number_of_residents
         self.sources = sources
         self.targets = targets

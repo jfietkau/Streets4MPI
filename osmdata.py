@@ -3,7 +3,7 @@
 #
 # osmdata.py
 # Copyright 2012 Julian Fietkau <http://www.julian-fietkau.de/>,
-# Joachim Nitschke
+#                Joachim Nitschke
 #
 # This file is part of Streets4MPI.
 #

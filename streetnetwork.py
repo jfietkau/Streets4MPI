@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 #
 # streetnetwork.py
-# Copyright 2012 Joachim Nitschke, Julian Fietkau
+# Copyright 2012 Joachim Nitschke, 
+#                Julian Fietkau <http://www.julian-fietkau.de/>
 #
 # This file is part of Streets4MPI.
 #

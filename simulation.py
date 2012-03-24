@@ -27,26 +27,20 @@ from math import sqrt
 
 from osmdata import GraphBuilder
 from streetnetwork import StreetNetwork
-from persistence import persist_write
 
 # This class does the actual simulation steps
 class Simulation(object):
 
-    def __init__(self, street_network, trips, log_callback, persist = False):
+    def __init__(self, street_network, trips, log_callback):
         self.street_network = street_network
         self.trips = trips
         self.log_callback = log_callback
         self.step_counter = 0
-        self.persist = persist
+        self.street_usage = dict()
 
         # initialize street usage with 0
-        self.street_usage = dict()
         for street, length, max_speed in street_network:
             self.street_usage[street] = 0
-
-        if self.persist:
-            self.log_callback("Saving street network to disk...")
-            persist_write("street_network_1.s4mpi", self.street_network)
 
     def step(self):
         self.step_counter += 1
@@ -75,10 +69,6 @@ class Simulation(object):
                         street = (min(current, paths[current]), max(current, paths[current]))
                         self.street_usage[street] += 1
                         current = paths[current]
-
-        if self.persist:
-            self.log_callback("Saving street usage to disk...")
-            persist_write("street_usage_" + str(self.step_counter) + ".s4mpi", self.street_usage)
 
     def calculate_actual_driving_time(self, street_length, max_speed, number_of_trips):
         # TODO store these constants in settings.py?

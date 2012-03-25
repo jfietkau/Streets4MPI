@@ -28,7 +28,7 @@ settings = {
     'max_simulation_steps' : 1,
 
     'logging' : 'stdout',
-    'persist_street_usage' : True,
+    'persist_traffic_load' : True,
     'use_residential_nodes_as_origins' : False
 }
 

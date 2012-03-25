@@ -36,11 +36,11 @@ class Simulation(object):
         self.trips = trips
         self.log_callback = log_callback
         self.step_counter = 0
-        self.street_usage = dict()
+        self.traffic_load = dict()
 
-        # initialize street usage with 0
+        # initialize traffic load with 0
         for street, length, max_speed in street_network:
-            self.street_usage[street] = 0
+            self.traffic_load[street] = 0
 
     def step(self):
         self.step_counter += 1
@@ -48,11 +48,11 @@ class Simulation(object):
 
         for street, length, max_speed in self.street_network:
             # update driving time
-            driving_time = self.calculate_actual_driving_time(length, max_speed, self.street_usage[street])
+            driving_time = self.calculate_actual_driving_time(length, max_speed, self.traffic_load[street])
             self.street_network.set_driving_time(street, driving_time)
 
-            # reset street usage
-            self.street_usage[street] = 0
+            # reset traffic load
+            self.traffic_load[street] = 0
 
         origin_nr = 0
         for origin in self.trips.keys():
@@ -67,7 +67,7 @@ class Simulation(object):
                     current = goal
                     while current != origin:
                         street = (min(current, paths[current]), max(current, paths[current]))
-                        self.street_usage[street] += 1
+                        self.traffic_load[street] += 1
                         current = paths[current]
 
     def calculate_actual_driving_time(self, street_length, max_speed, number_of_trips):

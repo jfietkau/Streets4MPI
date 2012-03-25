@@ -31,7 +31,7 @@ from persistence import persist_read
 
 from pygraph.algorithms.accessibility import connected_components
 
-# This class turns persistent street usage data into images
+# This class turns persistent traffic load data into images
 class Visualization(object):
 
     ATTRIBUTE_KEY_LATITUDE = 0
@@ -41,15 +41,15 @@ class Visualization(object):
 
     # Modes:
     # COMPONENTS - display connected components
-    # USAGE      - display relative street usage
-    # AMOUNT     - display absolute street usage
+    # USAGE      - display relative traffic load
+    # AMOUNT     - display absolute traffic load
     # MAXSPEED   - display local speed limits
 
     # Colors:
     # HEATMAP    - vary hue on a temperature-inspired scale from dark blue to red
     # MONOCHROME - vary brightness from black to white
 
-    def __init__(self, street_network_filename, street_usage_filename, mode = 'USAGE', color_mode = 'HEATMAP'):
+    def __init__(self, street_network_filename, traffic_load_filename, mode = 'USAGE', color_mode = 'HEATMAP'):
         print "Welcome to Streets4MPI visualization!"
         print "Current display mode:", mode, "with color mode", color_mode
         print "Initializing data structures..."
@@ -59,7 +59,7 @@ class Visualization(object):
         self.coord2km = (111.32, 66.4) # distances between 2 deg of lat/lon
         self.bounds = None
         self.street_network = None
-        self.street_usage = None
+        self.traffic_load = None
         self.node_coords = dict()
         self.mode = mode
         self.color_mode = color_mode
@@ -67,9 +67,9 @@ class Visualization(object):
         all_files = listdir('.')
         
         regex_network = re.compile(street_network_filename)
-        regex_usage = re.compile(street_usage_filename)
+        regex_usage = re.compile(traffic_load_filename)
         self.street_network_files = filter(regex_network.search, all_files)
-        self.street_usage_files = filter(regex_usage.search, all_files)
+        self.traffic_load_files = filter(regex_usage.search, all_files)
 
     def finalize(self):
         print "Done!"
@@ -99,10 +99,10 @@ class Visualization(object):
 
             self.street_network_files.remove("street_network_"+str(self.step_counter)+".s4mpi")
 
-        if "street_usage_"+str(self.step_counter)+".s4mpi" in self.street_usage_files:
+        if "traffic_load_"+str(self.step_counter)+".s4mpi" in self.traffic_load_files:
 
-            print "  Found street usage data, reading and drawing..."
-            self.street_usage = persist_read("street_usage_"+str(self.step_counter)+".s4mpi")
+            print "  Found traffic load data, reading and drawing..."
+            self.traffic_load = persist_read("traffic_load_"+str(self.step_counter)+".s4mpi")
             self.street_network_im = Image.new("RGBA", self.max_resolution, (0, 0, 0, 255))
             draw = ImageDraw.Draw(self.street_network_im)
 
@@ -116,9 +116,9 @@ class Visualization(object):
                 width = max_speed / 50
                 value = 0
                 if self.mode == 'AMOUNT':
-                    value = 1.0 * self.street_usage[street] / max_amount
+                    value = 1.0 * self.traffic_load[street] / max_amount
                 if self.mode == 'USAGE':
-                    value = min(1.0, 5 * (1.0 * self.street_usage[street]) / (max_speed * max_usage))
+                    value = min(1.0, 5 * (1.0 * self.traffic_load[street]) / (max_speed * max_usage))
                 if self.mode == 'MAXSPEED':
                     value = min(1.0, 1.0 * max_speed / 140)
                 color = self.value_to_color(value)
@@ -128,10 +128,10 @@ class Visualization(object):
                 draw.line([self.node_coords[street[0]], self.node_coords[street[1]]], fill=color, width=width)
 
             self.image_finalize()
-            print "  Saving image to disk (street_usage_"+str(self.step_counter)+".png) ..."
-            self.street_network_im.save("street_usage_"+str(self.step_counter)+".png")
+            print "  Saving image to disk (traffic_load_"+str(self.step_counter)+".png) ..."
+            self.street_network_im.save("traffic_load_"+str(self.step_counter)+".png")
 
-            self.street_usage_files.remove("street_usage_"+str(self.step_counter)+".s4mpi")
+            self.traffic_load_files.remove("traffic_load_"+str(self.step_counter)+".s4mpi")
 
     def calculate_components(self, graph):
         components = connected_components(graph)
@@ -141,13 +141,13 @@ class Visualization(object):
     def find_max_amount(self):
         amount = 0
         for street, length, max_speed in self.street_network:
-            amount = max(amount, 1.0 * self.street_usage[street])
+            amount = max(amount, 1.0 * self.traffic_load[street])
         return amount
 
     def find_max_usage(self):
         usage = 0
         for street, length, max_speed in self.street_network:
-            usage = max(usage, 1.0 * self.street_usage[street] / max_speed)
+            usage = max(usage, 1.0 * self.traffic_load[street] / max_speed)
         return usage
 
     def value_to_color(self, value):
@@ -221,9 +221,9 @@ class Visualization(object):
 
 if __name__ == "__main__":
 
-    vis = Visualization("^street_network_[0-9]+.s4mpi$", "^street_usage_[0-9]+.s4mpi$")
+    vis = Visualization("^street_network_[0-9]+.s4mpi$", "^traffic_load_[0-9]+.s4mpi$")
 
-    while len(vis.street_network_files + vis.street_usage_files) > 0:
+    while len(vis.street_network_files + vis.traffic_load_files) > 0:
         vis.step()
 
     vis.finalize()

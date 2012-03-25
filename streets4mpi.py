@@ -48,7 +48,7 @@ class Streets4MPI(object):
         self.log("Building street network...")
         street_network = data.build_street_network()
 
-        if self.process_rank == 0 and settings['persist_street_usage']:
+        if self.process_rank == 0 and settings['persist_traffic_load']:
             self.log("Saving street network to disk...")
             persist_write("street_network_1.s4mpi", street_network)
 
@@ -73,28 +73,28 @@ class Streets4MPI(object):
             self.log("Running simulation step", step + 1, "of", str(settings['max_simulation_steps']) + "...")
             simulation.step()
 
-            # send street usage to process 0
-            communicator.send(simulation.street_usage, dest=0, tag=step)
+            # send traffic load to process 0
+            communicator.send(simulation.traffic_load, dest=0, tag=step)
 
-            # sum up total street usage on process 0 and broadcast it
-            total_street_usage = None
+            # sum up total traffic load on process 0 and broadcast it
+            total_traffic_load = None
             if self.process_rank == 0:
-                total_street_usage = dict()
+                total_traffic_load = dict()
                 for i in range(number_of_processes):
-                    local_street_usage = communicator.recv(source=i, tag=step)
-                    for street, usage in local_street_usage.iteritems():
+                    local_traffic_load = communicator.recv(source=i, tag=step)
+                    for street, usage in local_traffic_load.iteritems():
                         total_usage = usage
-                        if street in total_street_usage.keys():
-                            total_usage += total_street_usage[street]
-                        total_street_usage[street] = total_usage
+                        if street in total_traffic_load.keys():
+                            total_usage += total_traffic_load[street]
+                        total_traffic_load[street] = total_usage
 
-                if settings['persist_street_usage']:
-                    self.log_indent("Saving street usage to disk...")
-                    persist_write("street_usage_" + str(step + 1) + ".s4mpi", total_street_usage)
+                if settings['persist_traffic_load']:
+                    self.log_indent("Saving traffic load to disk...")
+                    persist_write("traffic_load_" + str(step + 1) + ".s4mpi", total_traffic_load)
 
-            # broadcast total street usage
-            total_street_usage = communicator.bcast(total_street_usage, root=0)
-            simulation.street_usage = total_street_usage
+            # broadcast total traffic load
+            total_traffic_load = communicator.bcast(total_traffic_load, root=0)
+            simulation.traffic_load = total_traffic_load
 
         self.log("Done!")
 

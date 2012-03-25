@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 #
 # tripgenerator.py
-# Copyright 2012 Julian Fietkau <http://www.julian-fietkau.de/>
+# Copyright 2012 Julian Fietkau <http://www.julian-fietkau.de/>,
+#                Joachim Nitschke
 #
 # This file is part of Streets4MPI.
 #

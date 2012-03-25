@@ -38,28 +38,30 @@ class Simulation(object):
         self.step_counter = 0
         self.traffic_load = dict()
 
-        # initialize traffic load with 0
-        for street, length, max_speed in street_network:
-            self.traffic_load[street] = 0
-
     def step(self):
         self.step_counter += 1
         self.log_callback("Preparing edges...")
 
+        # update driving time based on traffic load
         for street, length, max_speed in self.street_network:
-            # update driving time
-            driving_time = self.calculate_actual_driving_time(length, max_speed, self.traffic_load[street])
+            if street in self.traffic_load.keys():
+                street_traffic_load = self.traffic_load[street]
+            else:
+                street_traffic_load = 0
+            driving_time = self.calculate_actual_driving_time(length, max_speed, street_traffic_load)
             self.street_network.set_driving_time(street, driving_time)
 
-            # reset traffic load
-            self.traffic_load[street] = 0
+        # reset traffic load
+        self.traffic_load.clear()
 
         origin_nr = 0
         for origin in self.trips.keys():
             # calculate all shortest paths from resident to every other node
             origin_nr += 1
-            self.log_callback("Origin nr", origin_nr, "...")
+            self.log_callback("Origin nr", str(origin_nr) + "...")
             paths = self.street_network.calculate_shortest_paths(origin)
+
+            # increase traffic load
             for goal in self.trips[origin]:
                 # is the goal even reachable at all? if not, ignore for now
                 if goal in paths:
@@ -67,8 +69,11 @@ class Simulation(object):
                     current = goal
                     while current != origin:
                         street = (min(current, paths[current]), max(current, paths[current]))
-                        self.traffic_load[street] += 1
                         current = paths[current]
+                        if street in self.traffic_load.keys():
+                            self.traffic_load[street] += 1
+                        else:
+                            self.traffic_load[street] = 1
 
     def calculate_actual_driving_time(self, street_length, max_speed, number_of_trips):
         # TODO store these constants in settings.py?

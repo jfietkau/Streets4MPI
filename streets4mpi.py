@@ -73,28 +73,23 @@ class Streets4MPI(object):
             self.log("Running simulation step", step + 1, "of", str(settings['max_simulation_steps']) + "...")
             simulation.step()
 
-            # send traffic load to process 0
-            communicator.send(simulation.traffic_load, dest=0, tag=step)
+            # gather local traffic loads from all other processes
+            local_traffic_loads = communicator.allgather(simulation.traffic_load)
 
-            # sum up total traffic load on process 0 and broadcast it
-            total_traffic_load = None
-            if self.process_rank == 0:
-                total_traffic_load = dict()
-                for i in range(number_of_processes):
-                    local_traffic_load = communicator.recv(source=i, tag=step)
-                    for street, usage in local_traffic_load.iteritems():
-                        total_usage = usage
-                        if street in total_traffic_load.keys():
-                            total_usage += total_traffic_load[street]
-                        total_traffic_load[street] = total_usage
+            # sum up total traffic load
+            total_traffic_load = dict()
+            for local_traffic_load in local_traffic_loads:
+                for street, usage in local_traffic_load.iteritems():
+                    total_usage = usage
+                    if street in total_traffic_load.keys():
+                        total_usage += total_traffic_load[street]
+                    total_traffic_load[street] = total_usage
 
-                if settings['persist_traffic_load']:
-                    self.log_indent("Saving traffic load to disk...")
-                    persist_write("traffic_load_" + str(step + 1) + ".s4mpi", total_traffic_load)
-
-            # broadcast total traffic load
-            total_traffic_load = communicator.bcast(total_traffic_load, root=0)
             simulation.traffic_load = total_traffic_load
+
+            if self.process_rank == 0 and settings['persist_traffic_load']:
+                self.log_indent("Saving traffic load to disk...")
+                persist_write("traffic_load_" + str(step + 1) + ".s4mpi", total_traffic_load)
 
         self.log("Done!")
 

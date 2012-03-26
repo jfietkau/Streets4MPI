@@ -81,7 +81,12 @@ class StreetNetwork(object):
     def __iter__(self):
         for street in self._graph.edges():
             if street[0] > street[1]:
-                street = (street[1], street[0])
+                # using the "graph" class from pygraph, we will get every edge
+                # twice in this loop: one time for each direction. We discard
+                # one of the directions to not return the same edge twice when
+                # iterating over the street network.
+                continue
+
             # get street attributes
             attrs = dict(self._graph.edge_attributes(street))
 

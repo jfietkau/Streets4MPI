@@ -115,10 +115,13 @@ class Visualization(object):
                 color = (255, 255, 255, 0) # default: white
                 width = max_speed / 50
                 value = 0
+                current_traffic_load = 0
+                if street in self.traffic_load.keys():
+                    current_traffic_load = self.traffic_load[street]
                 if self.mode == 'AMOUNT':
-                    value = 1.0 * self.traffic_load[street] / max_amount
+                    value = 1.0 * current_traffic_load / max_amount
                 if self.mode == 'USAGE':
-                    value = min(1.0, 5 * (1.0 * self.traffic_load[street]) / (max_speed * max_usage))
+                    value = min(1.0, 5 * (1.0 * current_traffic_load) / (max_speed * max_usage))
                 if self.mode == 'MAXSPEED':
                     value = min(1.0, 1.0 * max_speed / 140)
                 color = self.value_to_color(value)
@@ -141,13 +144,15 @@ class Visualization(object):
     def find_max_amount(self):
         amount = 0
         for street, length, max_speed in self.street_network:
-            amount = max(amount, 1.0 * self.traffic_load[street])
+            if street in self.traffic_load.keys():
+                amount = max(amount, 1.0 * self.traffic_load[street])
         return amount
 
     def find_max_usage(self):
         usage = 0
         for street, length, max_speed in self.street_network:
-            usage = max(usage, 1.0 * self.traffic_load[street] / max_speed)
+            if street in self.traffic_load.keys():
+                usage = max(usage, 1.0 * self.traffic_load[street] / max_speed)
         return usage
 
     def value_to_color(self, value):

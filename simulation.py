@@ -70,10 +70,10 @@ class Simulation(object):
                     while current != origin:
                         street = (min(current, paths[current]), max(current, paths[current]))
                         current = paths[current]
+                        usage = 1
                         if street in self.traffic_load.keys():
-                            self.traffic_load[street] += 1
-                        else:
-                            self.traffic_load[street] = 1
+                            usage += self.traffic_load[street]
+                        self.traffic_load[street] = usage
 
     def calculate_actual_driving_time(self, street_length, max_speed, number_of_trips):
         # TODO store these constants in settings.py?

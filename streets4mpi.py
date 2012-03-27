@@ -77,21 +77,25 @@ class Streets4MPI(object):
             local_traffic_loads = communicator.allgather(simulation.traffic_load)
 
             # sum up total traffic load
-            total_traffic_load = dict()
-            for local_traffic_load in local_traffic_loads:
-                for street, usage in local_traffic_load.iteritems():
-                    total_usage = usage
-                    if street in total_traffic_load.keys():
-                        total_usage += total_traffic_load[street]
-                    total_traffic_load[street] = total_usage
-
-            simulation.traffic_load = total_traffic_load
+            simulation.traffic_load = self.merge_dictionaries(local_traffic_loads)
 
             if self.process_rank == 0 and settings['persist_traffic_load']:
                 self.log_indent("Saving traffic load to disk...")
-                persist_write("traffic_load_" + str(step + 1) + ".s4mpi", total_traffic_load)
+                persist_write("traffic_load_" + str(step + 1) + ".s4mpi", simulation.traffic_load)
 
         self.log("Done!")
+
+    def merge_dictionaries(self, dictionaries):
+        merged_dictionary = dict()
+
+        for dictionary in dictionaries:
+            for key, value in dictionary.iteritems():
+                total_value = value
+                if key in merged_dictionary.keys():
+                    total_value += merged_dictionary[key]
+                merged_dictionary[key] = total_value
+
+        return merged_dictionary
 
     def log(self, *output):
         if(settings['logging'] == 'stdout'):

@@ -48,7 +48,8 @@ class Simulation(object):
                 street_traffic_load = self.traffic_load[street]
             else:
                 street_traffic_load = 0
-            driving_time = self.calculate_actual_driving_time(length, max_speed, street_traffic_load)
+            actual_speed = self.calculate_actual_speed(length, max_speed, street_traffic_load)
+            driving_time = length / actual_speed
             self.street_network.set_driving_time(street, driving_time)
 
         # reset traffic load
@@ -75,7 +76,7 @@ class Simulation(object):
                             usage += self.traffic_load[street]
                         self.traffic_load[street] = usage
 
-    def calculate_actual_driving_time(self, street_length, max_speed, number_of_trips):
+    def calculate_actual_speed(self, street_length, max_speed, number_of_trips):
         # TODO store these constants in settings.py?
         CAR_LENGTH = 4
         MIN_BREAKING_DISTANCE = 0.01
@@ -89,9 +90,8 @@ class Simulation(object):
         potential_speed = sqrt(BRAKING_DECELERATION * available_braking_distance * 2)
         # cars respect speed limit
         actual_speed = min(max_speed, potential_speed)
-        actual_driving_time = street_length / actual_speed
 
-        return actual_driving_time
+        return actual_speed
 
 if __name__ == "__main__":
     def out(*output):

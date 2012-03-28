@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 #
 # visualization.py
-# Copyright 2012 Julian Fietkau <http://www.julian-fietkau.de/>
+# Copyright 2012 Julian Fietkau <http://www.julian-fietkau.de/>,
+#                Joachim Nitschke
 #
 # This file is part of Streets4MPI.
 #
@@ -49,11 +50,10 @@ class Visualization(object):
     # HEATMAP    - vary hue on a temperature-inspired scale from dark blue to red
     # MONOCHROME - vary brightness from black to white
 
-    def __init__(self, street_network_filename, traffic_load_filename, mode = 'USAGE', color_mode = 'HEATMAP'):
+    def __init__(self, street_network_filename_pattern, traffic_load_filename_pattern, mode = 'USAGE', color_mode = 'HEATMAP'):
         print "Welcome to Streets4MPI visualization!"
         print "Current display mode:", mode, "with color mode", color_mode
-        print "Initializing data structures..."
-        self.step_counter = 0
+
         self.max_resolution = (2000, 2000)
         self.zoom = 1
         self.coord2km = (111.32, 66.4) # distances between 2 deg of lat/lon
@@ -63,78 +63,76 @@ class Visualization(object):
         self.node_coords = dict()
         self.mode = mode
         self.color_mode = color_mode
+        self.street_network_filename_expression = re.compile(street_network_filename_pattern)
+        self.traffic_load_filename_expression = re.compile(traffic_load_filename_pattern)
 
+    def visualize(self):
+        # find files
         all_files = listdir('.')
-        
-        regex_network = re.compile(street_network_filename)
-        regex_usage = re.compile(traffic_load_filename)
-        self.street_network_files = filter(regex_network.search, all_files)
-        self.traffic_load_files = filter(regex_usage.search, all_files)
+        street_network_files = filter(self.street_network_filename_expression.search, all_files)
+        traffic_load_files = filter(self.traffic_load_filename_expression.search, all_files)
 
-    def finalize(self):
-        print "Done!"
+        step = 0
+        while len(street_network_files + traffic_load_files) > 0:
+            step += 1
+            print "Step counter", step
 
-    def step(self):
-
-        self.step_counter += 1
-        print "Step counter", self.step_counter
-
-        if "street_network_"+str(self.step_counter)+".s4mpi" in self.street_network_files:
-
-            print "  Found street network data, reading..."
-            self.street_network = persist_read("street_network_"+str(self.step_counter)+".s4mpi")
-            self.bounds = self.street_network.bounds
-            self.zoom = self.max_resolution[0] / max((self.bounds[0][1] - self.bounds[0][0]) * self.coord2km[0],
+            if "street_network_" + str(step) + ".s4mpi" in street_network_files:
+                print "  Found street network data, reading..."
+                self.street_network = persist_read("street_network_" + str(step) + ".s4mpi")
+                self.bounds = self.street_network.bounds
+                self.zoom = self.max_resolution[0] / max((self.bounds[0][1] - self.bounds[0][0]) * self.coord2km[0],
                                   (self.bounds[1][1] - self.bounds[1][0]) * self.coord2km[1])
 
-            for node in self.street_network.get_nodes():
-                attrs = dict(self.street_network.get_node_attributes(node))
-                point = dict()
-                for i in range(2):
-                    point[i] = (attrs[i] - self.bounds[i][0]) * self.coord2km[i] * self.zoom
-                self.node_coords[node] = (point[1], self.max_resolution[1] - point[0]) # x = longitude, y = latitude
+                for node in self.street_network.get_nodes():
+                    attrs = dict(self.street_network.get_node_attributes(node))
+                    point = dict()
+                    for i in range(2):
+                        point[i] = (attrs[i] - self.bounds[i][0]) * self.coord2km[i] * self.zoom
+                    self.node_coords[node] = (point[1], self.max_resolution[1] - point[0]) # x = longitude, y = latitude
 
-            if self.mode == 'COMPONENTS':
-                  self.calculate_components(self.street_network._graph)
-
-            self.street_network_files.remove("street_network_"+str(self.step_counter)+".s4mpi")
-
-        if "traffic_load_"+str(self.step_counter)+".s4mpi" in self.traffic_load_files:
-
-            print "  Found traffic load data, reading and drawing..."
-            self.traffic_load = persist_read("traffic_load_"+str(self.step_counter)+".s4mpi")
-            self.street_network_im = Image.new("RGBA", self.max_resolution, (0, 0, 0, 255))
-            draw = ImageDraw.Draw(self.street_network_im)
-
-            if self.mode == 'AMOUNT':
-                max_amount = self.find_max_amount()
-            if self.mode == 'USAGE':
-                max_usage = self.find_max_usage()
-
-            for street, length, max_speed in self.street_network:
-                color = (255, 255, 255, 0) # default: white
-                width = max_speed / 50
-                value = 0
-                current_traffic_load = 0
-                if street in self.traffic_load.keys():
-                    current_traffic_load = self.traffic_load[street]
-                if self.mode == 'AMOUNT':
-                    value = 1.0 * current_traffic_load / max_amount
-                if self.mode == 'USAGE':
-                    value = min(1.0, 5 * (1.0 * current_traffic_load) / (max_speed * max_usage))
-                if self.mode == 'MAXSPEED':
-                    value = min(1.0, 1.0 * max_speed / 140)
-                color = self.value_to_color(value)
                 if self.mode == 'COMPONENTS':
-                    component = dict(self.street_network._graph.edge_attributes(street))[Visualization.ATTRIBUTE_KEY_COMPONENT]
-                    color = "hsl(" + str(int(137.5*component) % 360) + ",100%,50%)"
-                draw.line([self.node_coords[street[0]], self.node_coords[street[1]]], fill=color, width=width)
+                      self.calculate_components(self.street_network._graph)
 
-            self.image_finalize()
-            print "  Saving image to disk (traffic_load_"+str(self.step_counter)+".png) ..."
-            self.street_network_im.save("traffic_load_"+str(self.step_counter)+".png")
+                street_network_files.remove("street_network_"+str(step)+".s4mpi")
 
-            self.traffic_load_files.remove("traffic_load_"+str(self.step_counter)+".s4mpi")
+            if "traffic_load_"+str(step)+".s4mpi" in traffic_load_files:
+                print "  Found traffic load data, reading and drawing..."
+                self.traffic_load = persist_read("traffic_load_"+str(step)+".s4mpi")
+                self.street_network_im = Image.new("RGBA", self.max_resolution, (0, 0, 0, 255))
+                draw = ImageDraw.Draw(self.street_network_im)
+
+                if self.mode == 'AMOUNT':
+                    max_amount = self.find_max_amount()
+                if self.mode == 'USAGE':
+                    max_usage = self.find_max_usage()
+
+                for street, length, max_speed in self.street_network:
+                    color = (255, 255, 255, 0) # default: white
+                    width = max_speed / 50
+                    value = 0
+                    current_traffic_load = 0
+                    if street in self.traffic_load.keys():
+                        current_traffic_load = self.traffic_load[street]
+                    if self.mode == 'AMOUNT':
+                        value = 1.0 * current_traffic_load / max_amount
+                    if self.mode == 'USAGE':
+                        value = min(1.0, 5 * (1.0 * current_traffic_load) / (max_speed * max_usage))
+                    if self.mode == 'MAXSPEED':
+                        value = min(1.0, 1.0 * max_speed / 140)
+                    color = self.value_to_color(value)
+                    if self.mode == 'COMPONENTS':
+                        component = dict(self.street_network._graph.edge_attributes(street))[Visualization.ATTRIBUTE_KEY_COMPONENT]
+                        color = "hsl(" + str(int(137.5*component) % 360) + ",100%,50%)"
+                    draw.line([self.node_coords[street[0]], self.node_coords[street[1]]], fill=color, width=width)
+
+                self.image_finalize()
+                print "  Saving image to disk (traffic_load_"+str(step)+".png) ..."
+                self.street_network_im.save("traffic_load_"+str(step)+".png")
+
+                traffic_load_files.remove("traffic_load_"+str(step)+".s4mpi")
+
+        print "Done!"
 
     def calculate_components(self, graph):
         components = connected_components(graph)
@@ -225,11 +223,6 @@ class Visualization(object):
         return image.crop(bbox)        
 
 if __name__ == "__main__":
-
-    vis = Visualization("^street_network_[0-9]+.s4mpi$", "^traffic_load_[0-9]+.s4mpi$")
-
-    while len(vis.street_network_files + vis.traffic_load_files) > 0:
-        vis.step()
-
-    vis.finalize()
+    visualization = Visualization("^street_network_[0-9]+.s4mpi$", "^traffic_load_[0-9]+.s4mpi$")
+    visualization.visualize()
 

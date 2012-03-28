@@ -55,6 +55,11 @@ class StreetNetwork(object):
 
         self._graph.set_edge_weight(street, driving_time)
 
+    def get_driving_time(self, street):
+        if not self.has_street(street): raise AssertionError("Precondition failed: has_street(street)")
+
+        return self._graph.edge_weight(street)
+
     def set_bounds(self, min_lat, max_lat, min_lon, max_lon):
         self.bounds = ((min_lat, max_lat), (min_lon, max_lon))
 

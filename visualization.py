@@ -27,10 +27,11 @@ from PIL import Image, ImageChops, ImageDraw, ImageFont
 from math import floor
 from datetime import datetime
 
+from pygraph.algorithms.accessibility import connected_components
+
 from streetnetwork import StreetNetwork
 from persistence import persist_read
-
-from pygraph.algorithms.accessibility import connected_components
+from simulation import calculate_actual_speed
 
 # This class turns persistent traffic load data into images
 class Visualization(object):
@@ -77,7 +78,7 @@ class Visualization(object):
             street_network = persist_read(street_network_file)
             street_networks[street_network_file] = street_network
 
-        # keep max traffic laod to setup legend later
+        # keep max traffic load to setup legend later
         max_load = 0
 
         # read traffic loads
@@ -131,14 +132,17 @@ class Visualization(object):
                     if self.mode == 'TRAFFIC_LOAD':
                         value = 1.0 * current_traffic_load / max_load
                     if self.mode == 'MAX_SPEED':
-                        value = min(1.0, 1.0 * max_speed / 140)
+                        value = min(140, 1.0 * max_speed / 140)
+                    if self.mode == 'ACTUAL_SPEED':
+                        actual_speed = calculate_actual_speed(length, max_speed, current_traffic_load)
+                        value = min(1.0, 1.0 * actual_speed / 140)
                     color = self.value_to_color(value)
                     if self.mode == 'COMPONENTS':
                         component = dict(self.street_network._graph.edge_attributes(street))[Visualization.ATTRIBUTE_KEY_COMPONENT]
                         color = "hsl(" + str(int(137.5*component) % 360) + ",100%,50%)"
                     draw.line([self.node_coords[street[0]], self.node_coords[street[1]]], fill=color, width=width)
 
-                self.image_finalize(street_network_image, max_load)
+                street_network_image = self.image_finalize(street_network_image, max_load)
                 print "  Saving image to disk (traffic_load_" + str(step) + ".png) ..."
                 street_network_image.save("traffic_load_" + str(step) + ".png")
 
@@ -171,7 +175,7 @@ class Visualization(object):
 
     def image_finalize(self, street_network_image, max_load):
         # take the current street network and make it pretty
-        self.street_network_im = self.auto_crop(self.street_network_im)
+        street_network_image = self.auto_crop(street_network_image)
 
         white = (255,255,255,0)
         black = (0,0,0,0)
@@ -185,7 +189,7 @@ class Visualization(object):
         bar_inner_width = bar_inner_width - (bar_outer_width - bar_inner_width) % 4
         bar_offset = max(2, int(bar_outer_width - bar_inner_width) / 2)
 
-        if self.mode in ['TRAFFIC_LOAD', 'MAXSPEED']:
+        if self.mode in ['TRAFFIC_LOAD', 'MAX_SPEED', 'ACTUAL_SPEED']:
             draw.rectangle([(0, 0), (bar_outer_width, legend.size[1]-1)], fill = white)
             border_width = int(bar_offset / 2)
             draw.rectangle([(border_width, border_width), (bar_outer_width-border_width, legend.size[1]-1-border_width)], fill = black)
@@ -199,6 +203,9 @@ class Visualization(object):
             if self.mode == 'MAX_SPEED':
                 top_text = "speed limit: 140 km/h or higher"
                 bottom_text = "speed limit: 0 km/h"
+            if self.mode == 'ACTUAL_SPEED':
+                top_text = "actual driving speed: 140 km/h or higher"
+                bottom_text = "actual driving speed: 0 km/h"
             draw.text((int(bar_outer_width * 1.3), 0), top_text, font = font, fill = white)
             box = draw.textsize(bottom_text, font = font)
             draw.text((int(bar_outer_width * 1.3), legend.size[1] - box[1]), bottom_text, font = font, fill = white)
@@ -215,7 +222,7 @@ class Visualization(object):
         final.paste(legend, (street_network_image.size[0] + 2 * padding, padding))
         ImageDraw.Draw(final).text((2, legend.size[1] + 2 * padding), copyright, font = font, fill = white)
 
-        self.street_network_im = final
+        return final
 
     def auto_crop(self, image):
         # remove black edges from image
@@ -225,6 +232,6 @@ class Visualization(object):
         return image.crop(bbox)        
 
 if __name__ == "__main__":
-    visualization = Visualization("^street_network_[0-9]+.s4mpi$", "^traffic_load_[0-9]+.s4mpi$")
+    visualization = Visualization("^street_network_[0-9]+.s4mpi$", "^traffic_load_[0-9]+.s4mpi$", mode='ACTUAL_SPEED')
     visualization.visualize()
 

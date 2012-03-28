@@ -77,18 +77,18 @@ class Simulation(object):
 
 def calculate_actual_speed(street_length, max_speed, number_of_trips):
     # TODO store these constants in settings.py?
-    CAR_LENGTH = 4
-    MIN_BREAKING_DISTANCE = 0.01
-    BRAKING_DECELERATION = 7.5         
+    CAR_LENGTH = 4 # m
+    MIN_BREAKING_DISTANCE = 0.01 # m
+    BRAKING_DECELERATION = 7.5 # m/s²
 
     # TODO distribute trips over the day since they are not all driving at the same time
     # distribute trips over the street
-    available_space_for_each_car = street_length / max(number_of_trips, 1)
-    available_braking_distance = max(available_space_for_each_car - CAR_LENGTH, MIN_BREAKING_DISTANCE)
+    available_space_for_each_car = street_length / max(number_of_trips, 1) # m
+    available_braking_distance = max(available_space_for_each_car - CAR_LENGTH, MIN_BREAKING_DISTANCE) # m
     # how fast can a car drive to ensure the calculated breaking distance?
-    potential_speed = sqrt(BRAKING_DECELERATION * available_braking_distance * 2)
+    potential_speed = sqrt(BRAKING_DECELERATION * available_braking_distance * 2) # m/s
     # cars respect speed limit
-    actual_speed = min(max_speed, potential_speed)
+    actual_speed = min(max_speed, potential_speed * 3.6) # km/h
 
     return actual_speed
 

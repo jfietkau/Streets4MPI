@@ -22,7 +22,6 @@
 #
 
 from time import time
-
 from math import sqrt
 
 from osmdata import GraphBuilder
@@ -48,7 +47,7 @@ class Simulation(object):
                 street_traffic_load = self.traffic_load[street]
             else:
                 street_traffic_load = 0
-            actual_speed = self.calculate_actual_speed(length, max_speed, street_traffic_load)
+            actual_speed = calculate_actual_speed(length, max_speed, street_traffic_load)
             driving_time = length / actual_speed
             self.street_network.set_driving_time(street, driving_time)
 
@@ -76,22 +75,22 @@ class Simulation(object):
                             usage += self.traffic_load[street]
                         self.traffic_load[street] = usage
 
-    def calculate_actual_speed(self, street_length, max_speed, number_of_trips):
-        # TODO store these constants in settings.py?
-        CAR_LENGTH = 4
-        MIN_BREAKING_DISTANCE = 0.01
-        BRAKING_DECELERATION = 7.5         
+def calculate_actual_speed(street_length, max_speed, number_of_trips):
+    # TODO store these constants in settings.py?
+    CAR_LENGTH = 4
+    MIN_BREAKING_DISTANCE = 0.01
+    BRAKING_DECELERATION = 7.5         
 
-        # TODO distribute trips over the day since they are not all driving at the same time
-        # distribute trips over the street
-        available_space_for_each_car = street_length / max(number_of_trips, 1)
-        available_braking_distance = max(available_space_for_each_car - CAR_LENGTH, MIN_BREAKING_DISTANCE)
-        # how fast can a car drive to ensure the calculated breaking distance?
-        potential_speed = sqrt(BRAKING_DECELERATION * available_braking_distance * 2)
-        # cars respect speed limit
-        actual_speed = min(max_speed, potential_speed)
+    # TODO distribute trips over the day since they are not all driving at the same time
+    # distribute trips over the street
+    available_space_for_each_car = street_length / max(number_of_trips, 1)
+    available_braking_distance = max(available_space_for_each_car - CAR_LENGTH, MIN_BREAKING_DISTANCE)
+    # how fast can a car drive to ensure the calculated breaking distance?
+    potential_speed = sqrt(BRAKING_DECELERATION * available_braking_distance * 2)
+    # cars respect speed limit
+    actual_speed = min(max_speed, potential_speed)
 
-        return actual_speed
+    return actual_speed
 
 if __name__ == "__main__":
     def out(*output):

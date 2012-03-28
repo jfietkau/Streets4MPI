@@ -49,7 +49,7 @@ class Streets4MPI(object):
         street_network = data.build_street_network()
 
         if self.process_rank == 0 and settings['persist_traffic_load']:
-            self.log("Saving street network to disk...")
+            self.log_indent("Saving street network to disk...")
             persist_write("street_network_1.s4mpi", street_network)
 
         self.log("Locating area types...")
@@ -77,11 +77,12 @@ class Streets4MPI(object):
             local_traffic_loads = communicator.allgather(simulation.traffic_load)
 
             # sum up total traffic load
-            simulation.traffic_load = self.merge_dictionaries(local_traffic_loads)
+            total_traffic_load = self.merge_dictionaries(local_traffic_loads)
+            simulation.traffic_load = total_traffic_load
 
             if self.process_rank == 0 and settings['persist_traffic_load']:
                 self.log_indent("Saving traffic load to disk...")
-                persist_write("traffic_load_" + str(step + 1) + ".s4mpi", simulation.traffic_load)
+                persist_write("traffic_load_" + str(step + 1) + ".s4mpi", total_traffic_load)
 
         self.log("Done!")
 

@@ -22,13 +22,13 @@
 #
 
 settings = {
-    'osm_file' : 'osm/test.osm',
-    'parser_concurrency' : 4,
-    'number_of_residents' : 100,
-    'max_simulation_steps' : 1,
-
-    'logging' : 'stdout',
-    'persist_traffic_load' : True,
-    'use_residential_nodes_as_origins' : False
+    "osm_file" : "osm/test.osm",
+    "parser_concurrency" : 1, # set to 1 for deterministic output sequence
+    "number_of_residents" : 40,
+    "max_simulation_steps" : 1,
+    "logging" : "stdout",
+    "persist_traffic_load" : True,
+    "use_residential_origins" : False,
+    "random_seed" : 3756917 # only works if parser_concurrency is 1
 }
 

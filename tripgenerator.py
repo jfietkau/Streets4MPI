@@ -22,10 +22,14 @@
 #
 
 from random import sample
+from random import seed
 from time import time
 
 # This class creates the appropriate number of residents and manages the trips
 class TripGenerator(object):
+
+    def __init__(self, random_seed):
+        seed(random_seed)
 
     def generate_trips(self, number_of_residents, potential_origins, potential_goals):
         trips = dict()
@@ -33,6 +37,7 @@ class TripGenerator(object):
         for i in range(0, number_of_residents):
             origin = sample(potential_origins, 1)[0]
             goal = sample(potential_goals, 1)[0]
+
             if origin in trips.keys():
                 goals = trips[origin]
             else:

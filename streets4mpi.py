@@ -56,15 +56,20 @@ class Streets4MPI(object):
         data.find_node_categories()
 
         self.log("Generating trips...")
-        trip_generator = TripGenerator()
+        # vary random seed on different processes
+        random_seed = settings["random_seed"] + (37 * self.process_rank)
+        trip_generator = TripGenerator(random_seed)
         # distribute residents over processes
         number_of_residents = settings['number_of_residents'] / number_of_processes
-        if settings['use_residential_nodes_as_origins']:
+        if settings['use_residential_origins']:
             potential_origins = data.connected_residential_nodes
         else:
             potential_origins = street_network.get_nodes()
         potential_goals = data.connected_commercial_nodes | data.connected_industrial_nodes
         trips = trip_generator.generate_trips(number_of_residents, potential_origins, potential_goals)
+
+        for key, value in trips.iteritems():
+            print key, ":", value
 
         # run simulation
         simulation = Simulation(street_network, trips, self.log_indent)

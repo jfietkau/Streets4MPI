@@ -48,12 +48,12 @@ class Streets4MPI(object):
         seed(random_seed)
 
         self.log("Reading OpenStreetMap data...")
-        data = GraphBuilder(settings['osm_file'], settings['parser_concurrency'])
+        data = GraphBuilder(settings["osm_file"], settings["parser_concurrency"])
 
         self.log("Building street network...")
         street_network = data.build_street_network()
 
-        if self.process_rank == 0 and settings['persist_traffic_load']:
+        if self.process_rank == 0 and settings["persist_traffic_load"]:
             self.log_indent("Saving street network to disk...")
             persist_write("street_network_1.s4mpi", street_network)
 
@@ -63,8 +63,8 @@ class Streets4MPI(object):
         self.log("Generating trips...")
         trip_generator = TripGenerator()
         # distribute residents over processes
-        number_of_residents = settings['number_of_residents'] / number_of_processes
-        if settings['use_residential_origins']:
+        number_of_residents = settings["number_of_residents"] / number_of_processes
+        if settings["use_residential_origins"]:
             potential_origins = data.connected_residential_nodes
         else:
             potential_origins = street_network.get_nodes()
@@ -72,14 +72,14 @@ class Streets4MPI(object):
         trips = trip_generator.generate_trips(number_of_residents, potential_origins, potential_goals)
 
         # set traffic jam tolerance for this process and its trips
-        jam_tolerance = 0
+        jam_tolerance = random()
         self.log("Setting traffic jam tolerance to", str(round(jam_tolerance, 2)) + "...")        
 
         # run simulation
         simulation = Simulation(street_network, trips, jam_tolerance, self.log_indent)
 
-        for step in range(settings['max_simulation_steps']):
-            self.log("Running simulation step", step + 1, "of", str(settings['max_simulation_steps']) + "...")
+        for step in range(settings["max_simulation_steps"]):
+            self.log("Running simulation step", step + 1, "of", str(settings["max_simulation_steps"]) + "...")
             simulation.step()
 
             # gather local traffic loads from all other processes
@@ -89,7 +89,7 @@ class Streets4MPI(object):
             total_traffic_load = self.merge_dictionaries(local_traffic_loads)
             simulation.traffic_load = total_traffic_load
 
-            if self.process_rank == 0 and settings['persist_traffic_load']:
+            if self.process_rank == 0 and settings["persist_traffic_load"]:
                 self.log_indent("Saving traffic load to disk...")
                 persist_write("traffic_load_" + str(step + 1) + ".s4mpi", total_traffic_load)
 
@@ -108,18 +108,18 @@ class Streets4MPI(object):
         return merged_dictionary
 
     def log(self, *output):
-        if(settings['logging'] == 'stdout'):
+        if(settings["logging"] == "stdout"):
             print "[ %s ][ p%d ]" % (datetime.now(), self.process_rank),
             for o in output:
                 print o,
-            print ''
+            print ""
 
     def log_indent(self, *output):
-        if(settings['logging'] == 'stdout'):
+        if(settings["logging"] == "stdout"):
             print "[ %s ][ p%d ]  " % (datetime.now(), self.process_rank),
             for o in output:
                 print o,
-            print ''
+            print ""
 
 if __name__ == "__main__":
     Streets4MPI()

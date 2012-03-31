@@ -31,7 +31,7 @@ from pygraph.algorithms.accessibility import connected_components
 
 from streetnetwork import StreetNetwork
 from persistence import persist_read
-from simulation import calculate_actual_speed
+from simulation import calculate_driving_speed
 
 # This class turns persistent traffic load data into images
 class Visualization(object):

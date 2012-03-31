@@ -134,7 +134,7 @@ class Visualization(object):
                     if self.mode == 'MAX_SPEED':
                         value = min(140, 1.0 * max_speed / 140)
                     if self.mode == 'ACTUAL_SPEED':
-                        actual_speed = calculate_actual_speed(length, max_speed, current_traffic_load)
+                        actual_speed = calculate_driving_speed(length, max_speed, current_traffic_load)
                         value = min(1.0, 1.0 * actual_speed / 140)
                     color = self.value_to_color(value)
                     if self.mode == 'COMPONENTS':
@@ -232,6 +232,6 @@ class Visualization(object):
         return image.crop(bbox)        
 
 if __name__ == "__main__":
-    visualization = Visualization("^street_network_[0-9]+.s4mpi$", "^traffic_load_[0-9]+.s4mpi$", mode='ACTUAL_SPEED')
+    visualization = Visualization("^street_network_[0-9]+.s4mpi$", "^traffic_load_[0-9]+.s4mpi$", mode='TRAFFIC_LOAD')
     visualization.visualize()
 

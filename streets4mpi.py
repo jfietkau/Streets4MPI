@@ -22,6 +22,8 @@
 #
 
 from datetime import datetime
+from random import random
+from random import seed
 
 from mpi4py import MPI
 
@@ -41,6 +43,9 @@ class Streets4MPI(object):
         number_of_processes = communicator.Get_size()
 
         self.log("Welcome to Streets4MPI!")
+        # set random seed based on process rank
+        random_seed = settings["random_seed"] + (37 * self.process_rank)
+        seed(random_seed)
 
         self.log("Reading OpenStreetMap data...")
         data = GraphBuilder(settings['osm_file'], settings['parser_concurrency'])
@@ -56,9 +61,7 @@ class Streets4MPI(object):
         data.find_node_categories()
 
         self.log("Generating trips...")
-        # vary random seed on different processes
-        random_seed = settings["random_seed"] + (37 * self.process_rank)
-        trip_generator = TripGenerator(random_seed)
+        trip_generator = TripGenerator()
         # distribute residents over processes
         number_of_residents = settings['number_of_residents'] / number_of_processes
         if settings['use_residential_origins']:
@@ -68,11 +71,12 @@ class Streets4MPI(object):
         potential_goals = data.connected_commercial_nodes | data.connected_industrial_nodes
         trips = trip_generator.generate_trips(number_of_residents, potential_origins, potential_goals)
 
-        for key, value in trips.iteritems():
-            print key, ":", value
+        # set traffic jam tolerance for this process and its trips
+        jam_tolerance = 0
+        self.log("Setting traffic jam tolerance to", str(round(jam_tolerance, 2)) + "...")        
 
         # run simulation
-        simulation = Simulation(street_network, trips, self.log_indent)
+        simulation = Simulation(street_network, trips, jam_tolerance, self.log_indent)
 
         for step in range(settings['max_simulation_steps']):
             self.log("Running simulation step", step + 1, "of", str(settings['max_simulation_steps']) + "...")

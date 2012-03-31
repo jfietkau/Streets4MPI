@@ -30,9 +30,10 @@ from streetnetwork import StreetNetwork
 # This class does the actual simulation steps
 class Simulation(object):
 
-    def __init__(self, street_network, trips, log_callback):
+    def __init__(self, street_network, trips, jam_tolerance, log_callback):
         self.street_network = street_network
         self.trips = trips
+        self.jam_tolerance = jam_tolerance
         self.log_callback = log_callback
         self.step_counter = 0
         self.traffic_load = dict()
@@ -47,8 +48,16 @@ class Simulation(object):
                 street_traffic_load = self.traffic_load[street]
             else:
                 street_traffic_load = 0
-            actual_speed = calculate_actual_speed(length, max_speed, street_traffic_load)
-            driving_time = length / actual_speed
+
+            # ideal speed is when the street is empty
+            ideal_speed = calculate_driving_speed(length, max_speed, 0)
+            # actual speed may be less then that
+            actual_speed = calculate_driving_speed(length, max_speed, street_traffic_load)
+            # based on traffic jam tolerance the deceleration is weighted differently
+            perceived_speed = actual_speed + (ideal_speed - actual_speed) * self.jam_tolerance
+
+            driving_time = length / perceived_speed
+
             self.street_network.set_driving_time(street, driving_time)
 
         # reset traffic load
@@ -75,7 +84,7 @@ class Simulation(object):
                             usage += self.traffic_load[street]
                         self.traffic_load[street] = usage
 
-def calculate_actual_speed(street_length, max_speed, number_of_trips):
+def calculate_driving_speed(street_length, max_speed, number_of_trips):
     # TODO store these constants in settings.py?
     CAR_LENGTH = 4 # m
     MIN_BREAKING_DISTANCE = 0.01 # m

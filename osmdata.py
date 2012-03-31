@@ -45,10 +45,10 @@ class GraphBuilder(object):
 
         # max and min latitude and longitude
         self.bounds = dict()
-        self.bounds['min_lat'] = 9999
-        self.bounds['max_lat'] = -9999
-        self.bounds['min_lon'] = 9999
-        self.bounds['max_lon'] = -9999
+        self.bounds["min_lat"] = 9999
+        self.bounds["max_lat"] = -9999
+        self.bounds["min_lon"] = 9999
+        self.bounds["max_lon"] = -9999
 
         # active copy of OSM data indexed by OSM id
         self.all_osm_relations = dict()
@@ -66,25 +66,25 @@ class GraphBuilder(object):
         self.connected_commercial_nodes = set()
 
         # mapping from highway types to max speeds
-        # we do this so there's always a speed limit for every edge, even if
+        # we do this so there"s always a speed limit for every edge, even if
         # none is in the OSM data
         self.max_speed_map = dict()
-        self.max_speed_map['motorway'] = 140
-        self.max_speed_map['trunk'] = 120
-        self.max_speed_map['primary'] = 100
-        self.max_speed_map['secondary'] = 80
-        self.max_speed_map['tertiary'] = 70
-        self.max_speed_map['road'] = 50
-        self.max_speed_map['minor'] = 50
-        self.max_speed_map['unclassified'] = 50
-        self.max_speed_map['residential'] = 30
-        self.max_speed_map['track'] = 30
-        self.max_speed_map['service'] = 20
-        self.max_speed_map['path'] = 10
-        self.max_speed_map['cycleway'] = 1   # >0 to prevent infinite weights
-        self.max_speed_map['bridleway'] = 1  # >0 to prevent infinite weights
-        self.max_speed_map['pedestrian'] = 1 # >0 to prevent infinite weights
-        self.max_speed_map['footway'] = 1    # >0 to prevent infinite weights
+        self.max_speed_map["motorway"] = 140
+        self.max_speed_map["trunk"] = 120
+        self.max_speed_map["primary"] = 100
+        self.max_speed_map["secondary"] = 80
+        self.max_speed_map["tertiary"] = 70
+        self.max_speed_map["road"] = 50
+        self.max_speed_map["minor"] = 50
+        self.max_speed_map["unclassified"] = 50
+        self.max_speed_map["residential"] = 30
+        self.max_speed_map["track"] = 30
+        self.max_speed_map["service"] = 20
+        self.max_speed_map["path"] = 10
+        self.max_speed_map["cycleway"] = 1   # >0 to prevent infinite weights
+        self.max_speed_map["bridleway"] = 1  # >0 to prevent infinite weights
+        self.max_speed_map["pedestrian"] = 1 # >0 to prevent infinite weights
+        self.max_speed_map["footway"] = 1    # >0 to prevent infinite weights
 
         p = OSMParser(concurrency = parser_concurrency,
                       coords_callback = self.coords_callback,
@@ -96,12 +96,12 @@ class GraphBuilder(object):
     def build_street_network(self):
         # add boundaries to street network
         if 9999 not in self.bounds.values() and -9999 not in self.bounds.values():
-            self.street_network.set_bounds(self.bounds['min_lat'], self.bounds['max_lat'], 
-                                           self.bounds['min_lon'], self.bounds['max_lon'])
+            self.street_network.set_bounds(self.bounds["min_lat"], self.bounds["max_lat"], 
+                                           self.bounds["min_lon"], self.bounds["max_lon"])
 
         # construct the actual graph structure from the input data
         for osmid, tags, refs in self.all_osm_ways.values():
-            if 'highway' in tags:
+            if "highway" in tags:
                 if not self.street_network.has_node(refs[0]):
                     coord = self.coords[refs[0]]
                     self.street_network.add_node(refs[0], coord[self.LONGITUDE], coord[self.LATITUDE])
@@ -117,13 +117,16 @@ class GraphBuilder(object):
 
                     # determine max speed
                     max_speed = 50
-                    if 'maxspeed' in tags:
-                        if tags['maxspeed'].isdigit():
-                            max_speed = int(tags['maxspeed'])
-                        elif tags['maxspeed'] == 'none':
+                    if tags["highway"] in self.max_speed_map.keys():
+                        max_speed = self.max_speed_map[tags["highway"]]
+                    if "maxspeed" in tags:
+                        max_speed_tag = tags["maxspeed"]
+                        if max_speed_tag.isdigit():
+                            max_speed = int(max_speed_tag)
+                        elif max_speed_tag.endswith("mph"):
+                            max_speed = int(max_speed_tag.replace("mph", "").strip(" "))
+                        elif max_speed_tag == "none":
                             max_speed = 140
-                    elif tags['highway'] in self.max_speed_map.keys():
-                        max_speed = self.max_speed_map[tags['highway']]
 
                     # add street to street network
                     if not self.street_network.has_street(street):
@@ -136,28 +139,28 @@ class GraphBuilder(object):
         # TODO there has to be a better way to do this
         # TODO do this inside class StreetNetwork?
         for osmid, tags, members in self.all_osm_relations.values():
-            if 'landuse' in tags:
-                if tags['landuse'] == 'residential':
+            if "landuse" in tags:
+                if tags["landuse"] == "residential":
                     self.residential_nodes = self.residential_nodes | self.get_all_child_nodes(osmid)
-                if tags['landuse'] == 'industrial':
+                if tags["landuse"] == "industrial":
                     self.industrial_nodes = self.industrial_nodes | self.get_all_child_nodes(osmid)
-                if tags['landuse'] == 'commercial':
+                if tags["landuse"] == "commercial":
                     self.commercial_nodes = self.commercial_nodes | self.get_all_child_nodes(osmid)
         for osmid, tags, refs in self.all_osm_ways.values():
-            if 'landuse' in tags:
-                if tags['landuse'] == 'residential':
+            if "landuse" in tags:
+                if tags["landuse"] == "residential":
                     self.residential_nodes = self.residential_nodes | self.get_all_child_nodes(osmid)
-                if tags['landuse'] == 'industrial':
+                if tags["landuse"] == "industrial":
                     self.industrial_nodes = self.industrial_nodes | self.get_all_child_nodes(osmid)
-                if tags['landuse'] == 'commercial':
+                if tags["landuse"] == "commercial":
                     self.commercial_nodes = self.commercial_nodes | self.get_all_child_nodes(osmid)
         for osmid, tags, coords in self.all_osm_nodes.values():
-            if 'landuse' in tags:
-                if tags['landuse'] == 'residential':
+            if "landuse" in tags:
+                if tags["landuse"] == "residential":
                     self.residential_nodes = self.residential_nodes | self.get_all_child_nodes(osmid)
-                if tags['landuse'] == 'industrial':
+                if tags["landuse"] == "industrial":
                     self.industrial_nodes = self.industrial_nodes | self.get_all_child_nodes(osmid)
-                if tags['landuse'] == 'commercial':
+                if tags["landuse"] == "commercial":
                     self.commercial_nodes = self.commercial_nodes | self.get_all_child_nodes(osmid)
         street_network_nodes = set(self.street_network.get_nodes())
         self.connected_residential_nodes = self.residential_nodes & street_network_nodes
@@ -231,7 +234,7 @@ if __name__ == "__main__":
     # instantiate counter and parser and start parsing
     start = time()
 
-    builder = GraphBuilder('osm/hamburg.osm', 4)
+    builder = GraphBuilder("osm/hamburg.osm", 4)
 
     parsed = time()
 

@@ -45,6 +45,7 @@ class Visualization(object):
     # COMPONENTS   - display connected components
     # TRAFFIC_LOAD - display absolute traffic load
     # MAX_SPEED    - display local speed limits
+    # IDEAL_SPEED  - display calculated ideal speed based on safe breaking distance
     # ACTUAL_SPEED - display calculated actual speed based on traffic load
 
     # Colors:
@@ -124,7 +125,7 @@ class Visualization(object):
 
                 for street, length, max_speed in self.street_network:
                     color = (255, 255, 255, 0) # default: white
-                    width = max_speed / 50
+                    width = 1 # max_speed / 50 looks bad for motorways
                     value = 0
                     current_traffic_load = 0
                     if street in traffic_load.keys():
@@ -133,6 +134,9 @@ class Visualization(object):
                         value = 1.0 * current_traffic_load / max_load
                     if self.mode == 'MAX_SPEED':
                         value = min(140, 1.0 * max_speed / 140)
+                    if self.mode == 'IDEAL_SPEED':
+                        ideal_speed = calculate_driving_speed(length, max_speed, 0)
+                        value = min(1.0, 1.0 * ideal_speed / 140)
                     if self.mode == 'ACTUAL_SPEED':
                         actual_speed = calculate_driving_speed(length, max_speed, current_traffic_load)
                         value = min(1.0, 1.0 * actual_speed / 140)
@@ -189,7 +193,7 @@ class Visualization(object):
         bar_inner_width = bar_inner_width - (bar_outer_width - bar_inner_width) % 4
         bar_offset = max(2, int(bar_outer_width - bar_inner_width) / 2)
 
-        if self.mode in ['TRAFFIC_LOAD', 'MAX_SPEED', 'ACTUAL_SPEED']:
+        if self.mode in ['TRAFFIC_LOAD', 'MAX_SPEED', 'IDEAL_SPEED', 'ACTUAL_SPEED']:
             draw.rectangle([(0, 0), (bar_outer_width, legend.size[1]-1)], fill = white)
             border_width = int(bar_offset / 2)
             draw.rectangle([(border_width, border_width), (bar_outer_width-border_width, legend.size[1]-1-border_width)], fill = black)
@@ -203,6 +207,9 @@ class Visualization(object):
             if self.mode == 'MAX_SPEED':
                 top_text = "speed limit: 140 km/h or higher"
                 bottom_text = "speed limit: 0 km/h"
+            if self.mode == 'IDEAL_SPEED':
+                top_text = "ideal driving speed: 140 km/h or higher"
+                bottom_text = "ideal driving speed: 0 km/h"
             if self.mode == 'ACTUAL_SPEED':
                 top_text = "actual driving speed: 140 km/h or higher"
                 bottom_text = "actual driving speed: 0 km/h"
@@ -232,6 +239,6 @@ class Visualization(object):
         return image.crop(bbox)        
 
 if __name__ == "__main__":
-    visualization = Visualization("^street_network_[0-9]+.s4mpi$", "^traffic_load_[0-9]+.s4mpi$", mode='TRAFFIC_LOAD')
+    visualization = Visualization("^street_network_[0-9]+.s4mpi$", "^traffic_load_[0-9]+.s4mpi$", mode='MAX_SPEED')
     visualization.visualize()
 

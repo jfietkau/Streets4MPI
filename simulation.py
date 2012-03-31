@@ -87,7 +87,9 @@ class Simulation(object):
 def calculate_driving_speed(street_length, max_speed, number_of_trips):
     # TODO store these constants in settings.py?
     CAR_LENGTH = 4 # m
-    MIN_BREAKING_DISTANCE = 0.01 # m
+    MIN_BREAKING_DISTANCE = 0.001 # m
+    # take breaking deceleration for asphalt
+    # see http://www.bense-jessen.de/Infos/Page10430/page10430.html
     BRAKING_DECELERATION = 7.5 # m/s²
 
     # TODO distribute trips over the day since they are not all driving at the same time

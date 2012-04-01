@@ -91,9 +91,11 @@ class Streets4MPI(object):
             simulation.step()
 
             # gather local traffic loads from all other processes
+            self.log("Exchanging traffic load data between nodes...")
             local_traffic_loads = communicator.allgather(simulation.traffic_load)
 
             # sum up total traffic load
+            self.log("Merging traffic load data...")
             total_traffic_load = merge_dictionaries(local_traffic_loads)
             simulation.traffic_load = total_traffic_load
 

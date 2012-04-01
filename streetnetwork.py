@@ -79,6 +79,10 @@ class StreetNetwork(object):
             new_attrs.append((attr[0], value))
         self._graph.add_edge_attributes(street, new_attrs)
 
+        new_attrs = dict(new_attrs)
+        weight = new_attrs[self.ATTRIBUTE_KEY_LENGTH] / new_attrs[self.ATTRIBUTE_KEY_MAX_SPEED]
+        self._graph.set_edge_weight(street, weight)
+
     def set_bounds(self, min_lat, max_lat, min_lon, max_lon):
         self.bounds = ((min_lat, max_lat), (min_lon, max_lon))
 

@@ -25,7 +25,8 @@ settings = {
     "osm_file" : "osm/test.osm",
     "parser_concurrency" : 1, # set to 1 for deterministic output sequence
     "number_of_residents" : 100,
-    "max_simulation_steps" : 10,
+    "max_simulation_steps" : 100,
+    "steps_between_street_construction" : 10,
     "logging" : "stdout",
     "persist_traffic_load" : True,
     "use_residential_origins" : False,

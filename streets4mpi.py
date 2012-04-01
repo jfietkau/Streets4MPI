@@ -32,6 +32,7 @@ from tripgenerator import TripGenerator
 from simulation import Simulation
 from settings import settings
 from persistence import persist_write
+from utils import merge_dictionaries
 
 # This class runs the Streets4MPI program.
 class Streets4MPI(object):
@@ -73,12 +74,19 @@ class Streets4MPI(object):
 
         # set traffic jam tolerance for this process and its trips
         jam_tolerance = random()
-        self.log("Setting traffic jam tolerance to", str(round(jam_tolerance, 2)) + "...")        
+        self.log("Setting traffic jam tolerance to", str(round(jam_tolerance, 2)) + "...")
 
         # run simulation
         simulation = Simulation(street_network, trips, jam_tolerance, self.log_indent)
 
         for step in range(settings["max_simulation_steps"]):
+
+            if step > 0 and step % settings["steps_between_street_construction"] == 0:
+                self.log_indent("Road construction taking place...")
+                simulation.road_construction()
+                if self.process_rank == 0 and settings["persist_traffic_load"]:
+                    persist_write("street_network_" + str(step + 1) + ".s4mpi", simulation.street_network)
+
             self.log("Running simulation step", step + 1, "of", str(settings["max_simulation_steps"]) + "...")
             simulation.step()
 
@@ -86,7 +94,7 @@ class Streets4MPI(object):
             local_traffic_loads = communicator.allgather(simulation.traffic_load)
 
             # sum up total traffic load
-            total_traffic_load = self.merge_dictionaries(local_traffic_loads)
+            total_traffic_load = merge_dictionaries(local_traffic_loads)
             simulation.traffic_load = total_traffic_load
 
             if self.process_rank == 0 and settings["persist_traffic_load"]:
@@ -94,18 +102,6 @@ class Streets4MPI(object):
                 persist_write("traffic_load_" + str(step + 1) + ".s4mpi", total_traffic_load)
 
         self.log("Done!")
-
-    def merge_dictionaries(self, dictionaries):
-        merged_dictionary = dict()
-
-        for dictionary in dictionaries:
-            for key, value in dictionary.iteritems():
-                total_value = value
-                if key in merged_dictionary.keys():
-                    total_value += merged_dictionary[key]
-                merged_dictionary[key] = total_value
-
-        return merged_dictionary
 
     def log(self, *output):
         if(settings["logging"] == "stdout"):

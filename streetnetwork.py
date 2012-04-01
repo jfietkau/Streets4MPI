@@ -60,6 +60,24 @@ class StreetNetwork(object):
 
         return self._graph.edge_weight(street)
 
+    def set_length(self, street, length):
+        if not self.has_street(street): raise AssertionError("Precondition failed: has_street(street)")
+
+        # pygraph can not delete or update a single attribute :(
+        # thus, we save them all and the weight and rebuild them
+        weight = self._graph.edge_weight(street)
+        attrs = self._graph.edge_attributes(street)
+        self._graph.del_edge_labeling(street)
+        self._graph.set_edge_weight(street, weight)
+        new_attrs = []
+        for attr in attrs:
+            if attr[0] == self.ATTRIBUTE_KEY_LENGTH:
+                value = length
+            else:
+                value = attr[1]
+            new_attrs.append((attr[0], value))
+        self._graph.add_edge_attributes(street, new_attrs)
+
     def set_bounds(self, min_lat, max_lat, min_lon, max_lon):
         self.bounds = ((min_lat, max_lat), (min_lon, max_lon))
 

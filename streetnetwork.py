@@ -60,7 +60,7 @@ class StreetNetwork(object):
 
         return self._graph.edge_weight(street)
 
-    def set_maxspeed(self, street, maxspeed):
+    def change_maxspeed(self, street, maxspeed_delta):
         if not self.has_street(street): raise AssertionError("Precondition failed: has_street(street)")
 
         # pygraph can not delete or update a single attribute :(
@@ -72,7 +72,8 @@ class StreetNetwork(object):
         new_attrs = []
         for attr in attrs:
             if attr[0] == self.ATTRIBUTE_KEY_MAX_SPEED:
-                value = length
+                value = attr[1] + maxspeed_delta
+                value = max(1, min(140, value))
             else:
                 value = attr[1]
             new_attrs.append((attr[0], value))

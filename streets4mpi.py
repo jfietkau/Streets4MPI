@@ -98,10 +98,14 @@ class Streets4MPI(object):
             self.log("Merging traffic load data...")
             total_traffic_load = merge_dictionaries(local_traffic_loads)
             simulation.traffic_load = total_traffic_load
+            simulation.cumulative_traffic_load = merge_dictionaries((total_traffic_load, simulation.cumulative_traffic_load))
+            del local_traffic_loads
 
             if self.process_rank == 0 and settings["persist_traffic_load"]:
                 self.log_indent("Saving traffic load to disk...")
                 persist_write("traffic_load_" + str(step + 1) + ".s4mpi", total_traffic_load)
+
+            del total_traffic_load
 
         self.log("Done!")
 

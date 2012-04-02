@@ -88,17 +88,20 @@ class Simulation(object):
                             usage += self.traffic_load[street]
                         self.traffic_load[street] = usage
 
-        self.cumulative_traffic_load = merge_dictionaries((self.traffic_load, self.cumulative_traffic_load))
-
     def road_construction(self):
         sorted_traffic_load = sorted(self.cumulative_traffic_load.iteritems(), key = itemgetter(1))
-        counter = 0
-        for single_load in sorted_traffic_load:
-            if counter < 0.15 * len(sorted_traffic_load): # bottom 15%
-                self.street_network.change_maxspeed(single_load[0], -20)
-            if counter > 0.95 * len(sorted_traffic_load): # top 5%
-                self.street_network.change_maxspeed(single_load[0], 20)
-            counter += 1
+        max_decrease_index =  0.15 * len(sorted_traffic_load) # bottom 15%
+        min_increase_index = 0.95 * len(sorted_traffic_load) # top 5%
+        for i in range(len(sorted_traffic_load)):
+            if i <= max_decrease_index:
+                if not self.street_network.change_maxspeed(sorted_traffic_load[i][0], -20):
+                    max_decrease_index += 1
+            j = len(sorted_traffic_load) - i - 1
+            if j >= min_increase_index:
+                if not self.street_network.change_maxspeed(sorted_traffic_load[j][0], 20):
+                    min_increase_index -= 1
+            if max_decrease_index >= min_increase_index:
+                break
         self.cumulative_traffic_load = dict()
 
 def calculate_driving_speed(street_length, max_speed, number_of_trips):

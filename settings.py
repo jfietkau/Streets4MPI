@@ -22,14 +22,22 @@
 #
 
 settings = {
+    # technical settings
     "osm_file" : "osm/test.osm",
     "parser_concurrency" : 1, # set to 1 for deterministic output sequence
-    "number_of_residents" : 100,
-    "max_simulation_steps" : 100,
-    "steps_between_street_construction" : 10,
     "logging" : "stdout",
     "persist_traffic_load" : True,
+    "random_seed" : 3756917, # only works if parser_concurrency is 1
+
+    # simulation settings
+    "max_simulation_steps" : 100,
+    "number_of_residents" : 100,
     "use_residential_origins" : False,
-    "random_seed" : 3756917 # only works if parser_concurrency is 1
+    "car_length" : 4, # m
+    "min_breaking_distance" : 0.001, # m
+    # take breaking deceleration for asphalt
+    # see http://www.bense-jessen.de/Infos/Page10430/page10430.html
+    "braking_deceleration" : 7.5, # m/s²
+    "steps_between_street_construction" : 10
 }
 

@@ -28,6 +28,7 @@ from operator import itemgetter
 from osmdata import GraphBuilder
 from streetnetwork import StreetNetwork
 from utils import merge_dictionaries
+from settings import settings
 
 # This class does the actual simulation steps
 class Simulation(object):
@@ -101,19 +102,12 @@ class Simulation(object):
         self.cumulative_traffic_load = dict()
 
 def calculate_driving_speed(street_length, max_speed, number_of_trips):
-    # TODO store these constants in settings.py?
-    CAR_LENGTH = 4 # m
-    MIN_BREAKING_DISTANCE = 0.001 # m
-    # take breaking deceleration for asphalt
-    # see http://www.bense-jessen.de/Infos/Page10430/page10430.html
-    BRAKING_DECELERATION = 7.5 # m/s²
-
     # TODO distribute trips over the day since they are not all driving at the same time
     # distribute trips over the street
     available_space_for_each_car = street_length / max(number_of_trips, 1) # m
-    available_braking_distance = max(available_space_for_each_car - CAR_LENGTH, MIN_BREAKING_DISTANCE) # m
+    available_braking_distance = max(available_space_for_each_car - settings["car_length"], settings["min_breaking_distance"]) # m
     # how fast can a car drive to ensure the calculated breaking distance?
-    potential_speed = sqrt(BRAKING_DECELERATION * available_braking_distance * 2) # m/s
+    potential_speed = sqrt(settings["braking_deceleration"] * available_braking_distance * 2) # m/s
     # cars respect speed limit
     actual_speed = min(max_speed, potential_speed * 3.6) # km/h
 

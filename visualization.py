@@ -73,34 +73,24 @@ class Visualization(object):
         street_network_files = filter(self.street_network_filename_expression.search, all_files)
         traffic_load_files = filter(self.traffic_load_filename_expression.search, all_files)
 
-        # read street networks
-        street_networks = dict()
-        for street_network_file in street_network_files:
-            street_network = persist_read(street_network_file)
-            street_networks[street_network_file] = street_network
-
         # keep max traffic load to setup legend later
         max_load = 0
 
-        # read traffic loads
-        traffic_loads = dict()
+        # find max traffic load
         for traffic_load_file in traffic_load_files:
             traffic_load = persist_read(traffic_load_file)
-            traffic_loads[traffic_load_file] = traffic_load
-
-            # find max traffic load
             max_load = max(max_load, self.find_max_value(traffic_load))
 
         step = 0
-        while len(traffic_loads.keys()) > 0:
+        while len(traffic_load_files) > 0:
             step += 1
             print "Step counter", step
 
             # check if there is a street network for the current step and load it
             street_network_filename = "street_network_" + str(step) + ".s4mpi"
-            if street_network_filename in street_networks.keys():
+            if street_network_filename in street_network_files:
                 print "  Found street network data, reading..."
-                self.street_network = street_networks[street_network_filename]
+                self.street_network = persist_read(street_network_filename)
                 self.bounds = self.street_network.bounds
                 self.zoom = self.max_resolution[0] / max((self.bounds[0][1] - self.bounds[0][0]) * self.coord2km[0],
                                   (self.bounds[1][1] - self.bounds[1][0]) * self.coord2km[1])
@@ -117,9 +107,9 @@ class Visualization(object):
 
             # check if there is traffic load for the current step and draw it
             traffic_load_filename = "traffic_load_" + str(step) + ".s4mpi"
-            if traffic_load_filename in traffic_loads.keys():
+            if traffic_load_filename in traffic_load_files:
                 print "  Found traffic load data, reading and drawing..."
-                traffic_load = traffic_loads[traffic_load_filename]
+                traffic_load = persist_read(traffic_load_filename)
                 street_network_image = Image.new("RGBA", self.max_resolution, (0, 0, 0, 255))
                 draw = ImageDraw.Draw(street_network_image)
 
@@ -150,8 +140,7 @@ class Visualization(object):
                 print "  Saving image to disk (traffic_load_" + str(step) + ".png) ..."
                 street_network_image.save("traffic_load_" + str(step) + ".png")
 
-                # remove current traffic load from dictionary
-                del traffic_loads[traffic_load_filename]
+                traffic_load_files.remove(traffic_load_filename)
 
         print "Done!"
 

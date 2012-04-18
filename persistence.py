@@ -23,18 +23,27 @@
 import pickle
 import zlib
 
+# This function serializes and compresses an object
+def persist_serialize(data, compress = True):
+    if compress:
+        return zlib.compress(pickle.dumps(data))
+    else:
+        return pickle.dumps(data)
+
+# This function deserializes and decompresses an object
+def persist_deserialize(data, compressed = True):
+    if compressed:
+        return pickle.loads(zlib.decompress(data))
+    else:
+        return pickle.loads(data)
+
 # This function saves a data structure to a file
 def persist_write(filename, data, compress = True):
     file = open(filename, "w")
-    if compress:
-        file.write(zlib.compress(pickle.dumps(data)))
-    else:
-        pickle.dump(data, file)
+    file.write(persist_serialize(data, compress))
 
 # This function reads a data structure from a file
 def persist_read(filename, compressed = True):
     file = open(filename, "r")
-    if compressed:
-        pickle.loads(zlib.decompress(file.read()))
-    else:
-        return pickle.load(file)
+    persist_deserialize(file.read(), compressed)
+

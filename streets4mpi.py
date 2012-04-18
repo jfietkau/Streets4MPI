@@ -31,7 +31,7 @@ from osmdata import GraphBuilder
 from tripgenerator import TripGenerator
 from simulation import Simulation
 from settings import settings
-from persistence import persist_serialize, persist_deserialize, persist_write
+from persistence import persist_write
 from utils import merge_dictionaries
 
 # This class runs the Streets4MPI program.
@@ -92,18 +92,14 @@ class Streets4MPI(object):
 
             # gather local traffic loads from all other processes
             self.log("Exchanging traffic load data between nodes...")
-            serialized_local_traffic_load = persist_serialize(simulation.traffic_load)
-            serialized_local_traffic_loads = communicator.allgather(serialized_local_traffic_load)
+            local_traffic_loads = communicator.allgather(simulation.traffic_load)
 
             # sum up total traffic load
             self.log("Merging traffic load data...")
-            total_traffic_load = dict()
-            for serialized_traffic_load in serialized_local_traffic_loads:
-                traffic_load = persist_deserialize(serialized_traffic_load)
-                total_traffic_load = merge_dictionaries([total_traffic_load, traffic_load])
-            del serialized_local_traffic_loads
+            total_traffic_load = merge_dictionaries(local_traffic_loads)
             simulation.traffic_load = total_traffic_load
             simulation.cumulative_traffic_load = merge_dictionaries((total_traffic_load, simulation.cumulative_traffic_load))
+            del local_traffic_loads
 
             if self.process_rank == 0 and settings["persist_traffic_load"]:
                 self.log_indent("Saving traffic load to disk...")

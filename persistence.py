@@ -21,13 +21,20 @@
 #
 
 import pickle
+import zlib
 
 # This function saves a data structure to a file
-def persist_write(filename, data):
+def persist_write(filename, data, compress = True):
     file = open(filename, "w")
-    pickle.dump(data, file)
+    if compress:
+        file.write(zlib.compress(pickle.dumps(data)))
+    else:
+        pickle.dump(data, file)
 
 # This function reads a data structure from a file
-def persist_read(filename):
+def persist_read(filename, compressed = True):
     file = open(filename, "r")
-    return pickle.load(file)
+    if compressed:
+        pickle.loads(zlib.decompress(file.read()))
+    else:
+        return pickle.load(file)

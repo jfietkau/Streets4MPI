@@ -20,22 +20,22 @@
 # along with Streets4MPI.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import pickle
+import cPickle
 import zlib
 
 # This function serializes and compresses an object
 def persist_serialize(data, compress = True):
     if compress:
-        return zlib.compress(pickle.dumps(data))
+        return zlib.compress(cPickle.dumps(data))
     else:
-        return pickle.dumps(data)
+        return cPickle.dumps(data)
 
 # This function deserializes and decompresses an object
 def persist_deserialize(data, compressed = True):
     if compressed:
-        return pickle.loads(zlib.decompress(data))
+        return cPickle.loads(zlib.decompress(data))
     else:
-        return pickle.loads(data)
+        return cPickle.loads(data)
 
 # This function saves a data structure to a file
 def persist_write(filename, data, compress = True):

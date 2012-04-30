@@ -104,8 +104,23 @@ class Simulation(object):
                 break
         self.cumulative_traffic_load = dict()
 
+def calculate_driving_speed_var(street_length, max_speed, number_of_trips):
+    # individual formulae:
+    # number of trips per time = (number of trips * street length) / (actual speed * traffic period duration)
+    # available space for each car = street length / max(number of trips per time, 1)
+    # available braking distance = max(available space for each car - car length, min breaking distance)
+    # how fast can a car drive to ensure the calculated breaking distance?
+    # potential speed = sqrt(braking deceleration * available braking distance * 2)
+    # actual speed = min(max speed, potential speed)
+
+    # all in one calculation:
+    intermediate_quotient_result = settings["traffic_period_duration"] * 3600 * settings["braking_deceleration"] / max(number_of_trips, 1)
+    potential_speed = sqrt(intermediate_quotient_result**2 + 2 * settings["car_length"] * settings["braking_deceleration"]) + intermediate_quotient_result # m/s
+    actual_speed = min(max_speed, potential_speed * 3.6) # km/h
+
+    return actual_speed
+
 def calculate_driving_speed(street_length, max_speed, number_of_trips):
-    # TODO distribute trips over the day since they are not all driving at the same time
     # distribute trips over the street
     available_space_for_each_car = street_length / max(number_of_trips, 1) # m
     available_braking_distance = max(available_space_for_each_car - settings["car_length"], settings["min_breaking_distance"]) # m

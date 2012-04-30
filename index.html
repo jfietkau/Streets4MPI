@@ -1,0 +1,237 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Streets4MPI – Parallel Traffic Simulation with Python and MPI &mdash; Streets4MPI v0.1 documentation</title>
+    <link rel="stylesheet" href="_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/jsMath-3.6e/easy/load.js"></script>
+    <link rel="top" title="Streets4MPI v0.1 documentation" href="#" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li><a href="#">Streets4MPI v0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="#">
+              <img class="logo" src="_static/streets4mpi.png" alt="Logo"/>
+            </a></p>
+  <h3><a href="#">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Streets4MPI &#8211; Parallel Traffic Simulation with Python and MPI</a><ul>
+<li><a class="reference internal" href="#introduction">Introduction</a></li>
+<li><a class="reference internal" href="#installation">Installation</a><ul>
+<li><a class="reference internal" href="#requirements">Requirements</a></li>
+<li><a class="reference internal" href="#street-network-data">Street Network Data</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#simulation">Simulation</a></li>
+<li><a class="reference internal" href="#visualization">Visualization</a></li>
+<li><a class="reference internal" href="#known-limitations">Known Limitations</a></li>
+</ul>
+</li>
+</ul>
+
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/index.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="streets4mpi-parallel-traffic-simulation-with-python-and-mpi">
+<h1>Streets4MPI &#8211; Parallel Traffic Simulation with Python and MPI<a class="headerlink" href="#streets4mpi-parallel-traffic-simulation-with-python-and-mpi" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p><em>Streets4MPI</em> is a software that can simulate simple street traffic patterns
+in street networks imported from <a class="reference external" href="http://openstreetmap.org/">OpenStreetMap</a>.
+It is written in Python and supports MPI (through <a class="reference external" href="http://mpi4py.scipy.org/">mpi4py</a>) for parallel computation.</p>
+<p>The basic idea of <em>Streets4MPI</em> is to pick a fixed amount of <cite>(origin, goal)</cite>
+pairs in the street network. For each of these pairs, the shortest path is
+calculated, taking local speed limits into account. All calculated shortest
+paths are then traversed and the <em>traffic load</em> is recorded for each street,
+the cumulated results constituting a simulated <em>day</em>. From day two onwards,
+drivers are influenced to a semi-random extent by street congestions from the
+previous day. After a configurable number of days has passed, the street
+network is adapted: seldomly used roads are dismantled, heavily used ones are
+augmented to better cope with their usage.</p>
+<p>Apart from the simulation core, <em>Streets4MPI</em> also contains a visualization
+component that can output the simulation results as traffic load heatmaps.</p>
+</div>
+<div class="section" id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
+<p>At this point in time, we do not offer prepackaged versions of <em>Streets4MPI</em>
+for download. However, you can get the most recent version from our <a class="reference external" href="http://github.com/jfietkau/Streets4MPI">GitHub
+repository</a>:</p>
+<div class="highlight-python"><pre>git clone git@github.com:jfietkau/Streets4MPI.git</pre>
+</div>
+<p>If you are not familiar with <cite>git</cite>, refer to GitHub&#8217;s <a class="reference external" href="http://learn.github.com/p/intro.html">Introduction to Git</a> or any other of the free tutorials
+out there.</p>
+<div class="section" id="requirements">
+<h3>Requirements<a class="headerlink" href="#requirements" title="Permalink to this headline">¶</a></h3>
+<p><em>Streets4MPI</em> has been tested on Python 2.6 and 2.7. It is only known to work
+on Linux. No other platforms have been tested, but to the best of our knowledge
+it does not contain any platform-specific code. It is limited by the
+availability of the external packages on which it relies:</p>
+<ul class="simple">
+<li><a class="reference external" href="http://mpi4py.scipy.org/">mpi4py</a> for MPI-based parallelization</li>
+<li><a class="reference external" href="http://dev.omniscale.net/imposm.parser/">imposm.parser</a> for
+<em>OpenStreetMap</em> imports</li>
+<li><a class="reference external" href="http://code.google.com/p/python-graph/">python-graph</a> for large-scale
+graph structures</li>
+<li><a class="reference external" href="http://www.pythonware.com/products/pil/">Python Imaging Library</a> for
+visualization output</li>
+</ul>
+<p>Recommended ways to install these packages will vary across systems and
+distributions. Please refer to the individual projects&#8217; documentation and
+your operating system&#8217;s package management.</p>
+</div>
+<div class="section" id="street-network-data">
+<h3>Street Network Data<a class="headerlink" href="#street-network-data" title="Permalink to this headline">¶</a></h3>
+<p>To simulate traffic, <em>Streets4MPI</em> needs a street network to use. It must be
+available as a local file in a format that <a class="reference external" href="http://dev.omniscale.net/imposm.parser/">imposm.parser</a> can read, e.g. <a class="reference external" href="http://wiki.openstreetmap.org/wiki/OSM_XML">OSM XML</a>.</p>
+<p>We supply a small street network for testing, approximately encompassing the
+<a class="reference external" href="http://de.wikipedia.org/wiki/Hamburg-Stellingen">Hamburg-Stellingen</a>
+district, as <cite>res/test.osm</cite>.</p>
+<p><em>OpenStreetMap</em> data based around political borders can be downloaded at
+<a class="reference external" href="http://download.geofabrik.de/osm/">GEOFABRIK</a>. Of course, you can also
+<a class="reference external" href="http://wiki.openstreetmap.org/wiki/Export">export your own area</a>.</p>
+</div>
+</div>
+<div class="section" id="simulation">
+<h2>Simulation<a class="headerlink" href="#simulation" title="Permalink to this headline">¶</a></h2>
+<p>To get started, you should be able to run the <em>Streets4MPI</em> main script,
+<cite>Streets4MPI.py</cite>, from the command line. As long as all necessary packages
+are installed, it should be able to run even if you do not have a properly
+configured MPI available:</p>
+<div class="highlight-python"><pre>python Streets4MPI.py</pre>
+</div>
+<p>The simulation is configured in <cite>settings.py</cite>. Here are some parameters which
+you might want to adjust:</p>
+<dl class="docutils">
+<dt><cite>osm_file</cite></dt>
+<dd>This must be the location of your OpenStreetMap data file.</dd>
+<dt><cite>number_of_residents</cite></dt>
+<dd>This is the total number of trips calculated per
+simulated day.</dd>
+<dt><cite>max_simulation_steps</cite></dt>
+<dd>After this many days have been simulated, the program
+automatically exits.</dd>
+<dt><cite>persist_traffic_load</cite></dt>
+<dd>If <cite>True</cite>, traffic load data is written to <cite>*.s4mpi</cite>
+files for later visualization. If <cite>False</cite>, simulation results are discarded.</dd>
+<dt><cite>use_residential_origins</cite></dt>
+<dd>If <cite>True</cite>, only use nodes tagged as belonging to a
+<a class="reference external" href="http://wiki.openstreetmap.org/wiki/DE:Tag:landuse%3Dresidential">residential area</a>
+as origins for trips to simulate drivers going from their home to work.
+Depending on the quality of your <em>OpenStreetMap</em> data, these might not be
+tagged sufficiently, severely limiting potential origins. That is why this
+parameter defaults to <cite>False</cite> (any node can be an origin).</dd>
+<dt><cite>logging</cite></dt>
+<dd>If <cite>&#8220;stdout&#8221;</cite>, detailed logging to <cite>stdout</cite> occurs. If <cite>None</cite>, all
+logging is suppressed. Directly logging to a file is not supported yet.</dd>
+</dl>
+<p>If you want to run <em>Streets4MPI</em> in parallel on top of MPI, simply use
+<cite>mpiexec</cite> like you always would. Example:</p>
+<div class="highlight-python"><pre>mpiexec -n 16 python streets4mpi.py</pre>
+</div>
+<p><em>Streets4MPI</em> will then divide the total number of residents across all MPI
+nodes and manage the communication automatically.</p>
+</div>
+<div class="section" id="visualization">
+<h2>Visualization<a class="headerlink" href="#visualization" title="Permalink to this headline">¶</a></h2>
+<p>The visualization component of <em>Streets4MPI</em> is rund independantly of the main
+simulation. It checks its working directory for files with the <cite>.s4mpi</cite>
+extension and attempts to visualize them.</p>
+<p>Several data modes are supported, default and probably the most interesting one
+being <cite>TRAFFIC_LOAD</cite>. Furthermore, <em>Streets4MPI</em> supports two color modes: one
+for heatmap-style colorful maps and one for grayscale images where brightness
+denotes intensity.</p>
+<div class="figure">
+<a class="reference internal image-reference" href="_images/hamburg_color7.png"><img alt="Hamburg map visualizing traffic load as a heatmap" src="_images/hamburg_color7.png" style="width: 595.5px; height: 403.5px;" /></a>
+<p class="caption">This visualization output shows the city of Hamburg, Germany, after some
+simulated traffic load. It uses the heatmap color mode.</p>
+</div>
+<div class="figure">
+<a class="reference internal image-reference" href="_images/hamburg_bw6.png"><img alt="Hamburg map visualizing traffic load in grayscale" src="_images/hamburg_bw6.png" style="width: 595.5px; height: 403.5px;" /></a>
+<p class="caption">Using the same traffic load data, this visualization output uses the
+grayscale color mode.</p>
+</div>
+</div>
+<div class="section" id="known-limitations">
+<h2>Known Limitations<a class="headerlink" href="#known-limitations" title="Permalink to this headline">¶</a></h2>
+<p>When dealing with very large numbers of residents and/or street networks,
+<em>Streets4MPI</em> tends to use very large amounts of RAM and CPU time. We have
+performed tests up to 100,000 residents, and in some cases the simulation
+slowed down dramatically.</p>
+<p>Unfortunately, <em>Streets4MPI</em> is not sufficiently tested for international map
+data. The simulation should be completely location-agnostic, but the
+visualization contains several <em>&#8220;Hamburg-isms&#8221;</em>, both explicit and implicit. We
+welcome any contributions to make our map projection more versatile.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li><a href="#">Streets4MPI v0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Julian Fietkau, Joachim Nitschke.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+  </body>
+</html>

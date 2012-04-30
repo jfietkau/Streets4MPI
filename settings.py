@@ -33,6 +33,8 @@ settings = {
     "max_simulation_steps" : 100,
     "number_of_residents" : 100,
     "use_residential_origins" : False,
+    # period over which the traffic is distributed (24h = the hole day)
+    "traffic_period_duration" : 8, # h
     "car_length" : 4, # m
     "min_breaking_distance" : 0.001, # m
     # take breaking deceleration for asphalt

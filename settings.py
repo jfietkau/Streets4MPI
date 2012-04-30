@@ -24,7 +24,6 @@
 settings = {
     # technical settings
     "osm_file" : "osm/test.osm",
-    "parser_concurrency" : 1, # set to 1 for deterministic output sequence
     "logging" : "stdout",
     "persist_traffic_load" : True,
     "random_seed" : 3756917, # only works if parser_concurrency is 1

@@ -49,7 +49,7 @@ class Streets4MPI(object):
         seed(random_seed)
 
         self.log("Reading OpenStreetMap data...")
-        data = GraphBuilder(settings["osm_file"], settings["parser_concurrency"])
+        data = GraphBuilder(settings["osm_file"])
 
         self.log("Building street network...")
         street_network = data.build_street_network()

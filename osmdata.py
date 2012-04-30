@@ -34,7 +34,7 @@ class GraphBuilder(object):
     LATITUDE = 0
     LONGITUDE = 1
 
-    def __init__(self, osmfile, parser_concurrency):
+    def __init__(self, osmfile):
         # parse the input file and save its contents in memory
 
         # initialize street network
@@ -86,7 +86,7 @@ class GraphBuilder(object):
         self.max_speed_map["pedestrian"] = 1 # >0 to prevent infinite weights
         self.max_speed_map["footway"] = 1    # >0 to prevent infinite weights
 
-        p = OSMParser(concurrency = parser_concurrency,
+        p = OSMParser(concurrency = 1,
                       coords_callback = self.coords_callback,
                       nodes_callback = self.nodes_callback,
                       ways_callback = self.ways_callback,

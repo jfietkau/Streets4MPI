@@ -64,12 +64,13 @@ class StreetNetwork(object):
 
 
     def street_index(self, street):
-        return self._graph.edge_attributes(street)[STREET_ATTRIBUTE_INDEX_INDEX]
+        return self._graph.edge_attributes(street)[StreetNetwork.STREET_ATTRIBUTE_INDEX_INDEX]
 
 
     def change_maxspeed(self, street, max_speed_delta):
         street_attributes = self._graph.edge_attributes(street)
-        street_attributes[STREET_ATTRIBUTE_INDEX_MAX_SPEED] = street_attributes[STREET_ATTRIBUTE_INDEX_MAX_SPEED] + max_speed_delta
+        current_max_speed = street_attributes[StreetNetwork.STREET_ATTRIBUTE_INDEX_MAX_SPEED]
+        street_attributes[StreetNetwork.STREET_ATTRIBUTE_INDEX_MAX_SPEED] = max(1, min(140, current_max_speed + max_speed_delta))
 
 
     def set_bounds(self, min_latitude, max_latitude, min_longitude, max_longitude):
@@ -88,7 +89,7 @@ class StreetNetwork(object):
     def node_coordinates(self, node):
         node_attributes = self._graph.node_attributes(node)
 
-        return (node_attributes[NODE_ATTRIBUTE_INDEX_LONGITUDE], node_attributes[NODE_ATTRIBUTE_INDEX_LATITUDE])
+        return (node_attributes[StreetNetwork.NODE_ATTRIBUTE_INDEX_LONGITUDE], node_attributes[StreetNetwork.NODE_ATTRIBUTE_INDEX_LATITUDE])
 
 
     def has_node(self, node):

@@ -36,10 +36,7 @@ from simulation import calculate_driving_speed
 # This class turns persistent traffic load data into images
 class Visualization(object):
 
-    ATTRIBUTE_KEY_LATITUDE = 0
-    ATTRIBUTE_KEY_LONGITUDE = 1
     ATTRIBUTE_KEY_COMPONENT = 2
-    ATTRIBUTE_KEY_COORDS = 3
 
     # Modes:
     # COMPONENTS   - display connected components
@@ -96,6 +93,7 @@ class Visualization(object):
                                   (self.bounds[1][1] - self.bounds[1][0]) * self.coord2km[1])
 
                 for node in self.street_network.get_nodes():
+                    # TODO use longitude, latitude = self.street_network.node_coordinates(node)
                     attrs = dict(self.street_network.get_node_attributes(node))
                     point = dict()
                     for i in range(2):

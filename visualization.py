@@ -93,11 +93,10 @@ class Visualization(object):
                                   (self.bounds[1][1] - self.bounds[1][0]) * self.coord2km[1])
 
                 for node in self.street_network.get_nodes():
-                    # TODO use longitude, latitude = self.street_network.node_coordinates(node)
-                    attrs = dict(self.street_network.get_node_attributes(node))
+                    coords = self.street_network.node_coordinates(node)
                     point = dict()
                     for i in range(2):
-                        point[i] = (attrs[i] - self.bounds[i][0]) * self.coord2km[i] * self.zoom
+                        point[i] = (coords[1-i] - self.bounds[i][0]) * self.coord2km[i] * self.zoom
                     self.node_coords[node] = (point[1], self.max_resolution[1] - point[0]) # x = longitude, y = latitude
 
                 if self.mode == 'COMPONENTS':
@@ -226,6 +225,6 @@ class Visualization(object):
         return image.crop(bbox)        
 
 if __name__ == "__main__":
-    visualization = Visualization("^street_network_[0-9]+.s4mpi$", "^traffic_load_[0-9]+.s4mpi$", mode='MAX_SPEED')
+    visualization = Visualization("^street_network_[0-9]+.s4mpi$", "^traffic_load_[0-9]+.s4mpi$", mode='TRAFFIC_LOAD')
     visualization.visualize()
 

@@ -26,10 +26,10 @@ settings = {
     "osm_file" : "osm/test.osm",
     "logging" : "stdout",
     "persist_traffic_load" : True,
-    "random_seed" : 3756917, # only works if parser_concurrency is 1
+    "random_seed" : 3756917, # set to None to use system time
 
     # simulation settings
-    "max_simulation_steps" : 100,
+    "max_simulation_steps" : 10,
     "number_of_residents" : 100,
     "use_residential_origins" : False,
     # period over which the traffic is distributed (24h = the hole day)
@@ -39,6 +39,7 @@ settings = {
     # take breaking deceleration for asphalt
     # see http://www.bense-jessen.de/Infos/Page10430/page10430.html
     "braking_deceleration" : 7.5, # m/s²
-    "steps_between_street_construction" : 10
+    "steps_between_street_construction" : 10,
+    "trip_volume" : 1
 }
 

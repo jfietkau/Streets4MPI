@@ -84,7 +84,7 @@ class Simulation(object):
                     while current != origin:
                         street = (min(current, paths[current]), max(current, paths[current]))
                         current = paths[current]
-                        usage = 1
+                        usage = settings["trip_volume"]
                         if street in self.traffic_load.keys():
                             usage += self.traffic_load[street]
                         self.traffic_load[street] = usage

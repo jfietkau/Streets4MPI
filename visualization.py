@@ -111,7 +111,7 @@ class Visualization(object):
                 street_network_image = Image.new("RGBA", self.max_resolution, (0, 0, 0, 255))
                 draw = ImageDraw.Draw(street_network_image)
 
-                for street, length, max_speed in self.street_network:
+                for street, street_index, length, max_speed in self.street_network:
                     color = (255, 255, 255, 0) # default: white
                     width = 1 # max_speed / 50 looks bad for motorways
                     value = 0

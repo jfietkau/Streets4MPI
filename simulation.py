@@ -42,12 +42,13 @@ class Simulation(object):
         self.traffic_load = dict()
         self.cumulative_traffic_load = dict()
 
+
     def step(self):
         self.step_counter += 1
         self.log_callback("Preparing edges...")
 
         # update driving time based on traffic load
-        for street, length, max_speed in self.street_network:
+        for street, street_index, length, max_speed in self.street_network:
             if street in self.traffic_load.keys():
                 street_traffic_load = self.traffic_load[street]
             else:
@@ -88,6 +89,7 @@ class Simulation(object):
                             usage += self.traffic_load[street]
                         self.traffic_load[street] = usage
 
+
     def road_construction(self):
         sorted_traffic_load = sorted(self.cumulative_traffic_load.iteritems(), key = itemgetter(1))
         max_decrease_index =  0.15 * len(sorted_traffic_load) # bottom 15%
@@ -103,6 +105,7 @@ class Simulation(object):
             if max_decrease_index >= min_increase_index:
                 break
         self.cumulative_traffic_load = dict()
+
 
 def calculate_driving_speed_var(street_length, max_speed, number_of_trips):
     # individual formulae:
@@ -120,6 +123,7 @@ def calculate_driving_speed_var(street_length, max_speed, number_of_trips):
 
     return actual_speed
 
+
 def calculate_driving_speed(street_length, max_speed, number_of_trips):
     # distribute trips over the street
     available_space_for_each_car = street_length / max(number_of_trips, 1) # m
@@ -130,6 +134,7 @@ def calculate_driving_speed(street_length, max_speed, number_of_trips):
     actual_speed = min(max_speed, potential_speed * 3.6) # km/h
 
     return actual_speed
+
 
 if __name__ == "__main__":
     def out(*output):

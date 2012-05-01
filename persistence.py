@@ -45,5 +45,5 @@ def persist_write(filename, data, compress = True):
 # This function reads a data structure from a file
 def persist_read(filename, compressed = True):
     file = open(filename, "r")
-    persist_deserialize(file.read(), compressed)
+    return persist_deserialize(file.read(), compressed)
 

@@ -75,7 +75,7 @@ class Visualization(object):
 
         # find max traffic load
         for traffic_load_file in traffic_load_files:
-            traffic_load = persist_read(traffic_load_file)
+            traffic_load = persist_read(traffic_load_file, is_array = True)
             max_load = max(max_load, max(traffic_load))
 
         step = 0
@@ -106,7 +106,7 @@ class Visualization(object):
             traffic_load_filename = "traffic_load_" + str(step) + ".s4mpi"
             if traffic_load_filename in traffic_load_files:
                 print "  Found traffic load data, reading and drawing..."
-                traffic_load = persist_read(traffic_load_filename)
+                traffic_load = persist_read(traffic_load_filename, is_array = True)
                 street_network_image = Image.new("RGBA", self.max_resolution, (0, 0, 0, 255))
                 draw = ImageDraw.Draw(street_network_image)
 

@@ -22,6 +22,7 @@
 
 import cPickle
 import zlib
+import array
 
 # This function serializes and compresses an object
 def persist_serialize(data, compress = True):
@@ -38,12 +39,22 @@ def persist_deserialize(data, compressed = True):
         return cPickle.loads(data)
 
 # This function saves a data structure to a file
-def persist_write(filename, data, compress = True):
+def persist_write(filename, data, compress = True, is_array = False):
     file = open(filename, "w")
-    file.write(persist_serialize(data, compress))
+    if is_array:
+        data = zlib.compress(data.tostring())
+    else:
+        data = persist_serialize(data, compress)
+    file.write(data)
 
 # This function reads a data structure from a file
-def persist_read(filename, compressed = True):
+def persist_read(filename, compressed = True, is_array = False):
     file = open(filename, "r")
-    return persist_deserialize(file.read(), compressed)
+    data = file.read()
+    if is_array:
+        result = array.array("I")
+        result.fromstring(zlib.decompress(data))
+    else:
+        result = persist_deserialize(data, compressed)
+    return result
 

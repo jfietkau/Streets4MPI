@@ -103,7 +103,7 @@ class Streets4MPI(object):
 
             if self.process_rank == 0 and settings["persist_traffic_load"]:
                 self.log_indent("Saving traffic load to disk...")
-                persist_write("traffic_load_" + str(step + 1) + ".s4mpi", total_traffic_load)
+                persist_write("traffic_load_" + str(step + 1) + ".s4mpi", total_traffic_load, is_array = True)
 
             del total_traffic_load
 

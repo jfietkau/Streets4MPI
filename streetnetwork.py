@@ -38,6 +38,7 @@ class StreetNetwork(object):
         self.bounds = None
         # give every street a sequential index (used for perfomance optimization)
         self.street_index = 0
+        self.streets_by_index = dict()
 
 
     def has_street(self, street):
@@ -51,6 +52,7 @@ class StreetNetwork(object):
         driving_time = length / max_speed
 
         self._graph.add_edge(street, wt=driving_time, attrs=street_attributes)
+        self.streets_by_index[self.street_index] = street
 
         self.street_index += 1
 
@@ -63,8 +65,15 @@ class StreetNetwork(object):
         return self._graph.edge_weight(street)
 
 
-    def street_index(self, street):
+    def get_street_index(self, street):
         return self._graph.edge_attributes(street)[StreetNetwork.STREET_ATTRIBUTE_INDEX_INDEX]
+
+
+    def get_street_by_index(self, street_index):
+        if street_index in self.streets_by_index:
+            return self.streets_by_index[street_index]
+        else:
+            return None
 
 
     def change_maxspeed(self, street, max_speed_delta):

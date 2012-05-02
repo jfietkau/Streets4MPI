@@ -76,7 +76,7 @@ class Visualization(object):
         # find max traffic load
         for traffic_load_file in traffic_load_files:
             traffic_load = persist_read(traffic_load_file)
-            max_load = max(max_load, self.find_max_value(traffic_load))
+            max_load = max(max_load, max(traffic_load))
 
         step = 0
         while len(traffic_load_files) > 0:
@@ -115,8 +115,7 @@ class Visualization(object):
                     width = 1 # max_speed / 50 looks bad for motorways
                     value = 0
                     current_traffic_load = 0
-                    if street in traffic_load.keys():
-                        current_traffic_load = traffic_load[street]
+                    current_traffic_load = traffic_load[street_index]
                     if self.mode == 'TRAFFIC_LOAD':
                         value = 1.0 * current_traffic_load / max_load
                     if self.mode == 'MAX_SPEED':

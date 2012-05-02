@@ -32,7 +32,7 @@ from tripgenerator import TripGenerator
 from simulation import Simulation
 from settings import settings
 from persistence import persist_write
-from utils import merge_dictionaries
+from utils import merge_arrays
 
 # This class runs the Streets4MPI program.
 class Streets4MPI(object):
@@ -96,9 +96,9 @@ class Streets4MPI(object):
 
             # sum up total traffic load
             self.log("Merging traffic load data...")
-            total_traffic_load = merge_dictionaries(local_traffic_loads)
+            total_traffic_load = merge_arrays(local_traffic_loads)
             simulation.traffic_load = total_traffic_load
-            simulation.cumulative_traffic_load = merge_dictionaries((total_traffic_load, simulation.cumulative_traffic_load))
+            simulation.cumulative_traffic_load = merge_arrays((total_traffic_load, simulation.cumulative_traffic_load))
             del local_traffic_loads
 
             if self.process_rank == 0 and settings["persist_traffic_load"]:

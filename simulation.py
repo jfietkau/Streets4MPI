@@ -24,10 +24,11 @@
 from time import time
 from math import sqrt
 from operator import itemgetter
+from array import array
+from itertools import repeat
 
 from osmdata import GraphBuilder
 from streetnetwork import StreetNetwork
-from utils import merge_dictionaries
 from settings import settings
 
 # This class does the actual simulation steps
@@ -39,8 +40,9 @@ class Simulation(object):
         self.jam_tolerance = jam_tolerance
         self.log_callback = log_callback
         self.step_counter = 0
-        self.traffic_load = dict()
-        self.cumulative_traffic_load = dict()
+        self.traffic_load = array("I", repeat(0, self.street_network.street_index))
+
+        self.cumulative_traffic_load = None
 
 
     def step(self):
@@ -49,10 +51,7 @@ class Simulation(object):
 
         # update driving time based on traffic load
         for street, street_index, length, max_speed in self.street_network:
-            if street in self.traffic_load.keys():
-                street_traffic_load = self.traffic_load[street]
-            else:
-                street_traffic_load = 0
+            street_traffic_load = self.traffic_load[street_index]
 
             # ideal speed is when the street is empty
             ideal_speed = calculate_driving_speed(length, max_speed, 0)
@@ -66,7 +65,7 @@ class Simulation(object):
             self.street_network.set_driving_time(street, driving_time)
 
         # reset traffic load
-        self.traffic_load.clear()
+        self.traffic_load = array("I", repeat(0, self.street_network.street_index))
 
         origin_nr = 0
         for origin in self.trips.keys():
@@ -85,13 +84,16 @@ class Simulation(object):
                         street = (min(current, paths[current]), max(current, paths[current]))
                         current = paths[current]
                         usage = settings["trip_volume"]
-                        if street in self.traffic_load.keys():
-                            usage += self.traffic_load[street]
-                        self.traffic_load[street] = usage
+                        street_index = self.street_network.get_street_index(street)
+                        self.traffic_load[street_index] += usage
 
 
     def road_construction(self):
-        sorted_traffic_load = sorted(self.cumulative_traffic_load.iteritems(), key = itemgetter(1))
+        dict_traffic_load = dict()
+        for i in range(0, len(self.cumulative_traffic_load)):
+            street = self.street_network.get_street_by_index(i)
+            dict_traffic_load[street] = self.cumulative_traffic_load[i]
+        sorted_traffic_load = sorted(dict_traffic_load.iteritems(), key = itemgetter(1))
         max_decrease_index =  0.15 * len(sorted_traffic_load) # bottom 15%
         min_increase_index = 0.95 * len(sorted_traffic_load) # top 5%
         for i in range(len(sorted_traffic_load)):
@@ -104,7 +106,7 @@ class Simulation(object):
                     min_increase_index -= 1
             if max_decrease_index >= min_increase_index:
                 break
-        self.cumulative_traffic_load = dict()
+        self.cumulative_traffic_load = None
 
 
 def calculate_driving_speed_var(street_length, max_speed, number_of_trips):

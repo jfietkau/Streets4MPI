@@ -20,15 +20,16 @@
 # along with Streets4MPI.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-def merge_dictionaries(dictionaries):
-    merged_dictionary = dict()
+from array import array
+from itertools import repeat
 
-    for dictionary in dictionaries:
-        for key, value in dictionary.iteritems():
-            total_value = value
-            if key in merged_dictionary.keys():
-                total_value += merged_dictionary[key]
-            merged_dictionary[key] = total_value
+def merge_arrays(arrays):
+    merged_array = array("I", repeat(0, len(arrays[0])))
 
-    return merged_dictionary
+    for arr in arrays:
+        if arr != None:
+            for index in range(0, len(arr)):
+                merged_array[index] += arr[index]
+
+    return merged_array
 

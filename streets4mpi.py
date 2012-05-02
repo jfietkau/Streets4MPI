@@ -24,6 +24,8 @@
 from datetime import datetime
 from random import random
 from random import seed
+from array import array
+from itertools import repeat
 
 from mpi4py import MPI
 
@@ -92,14 +94,10 @@ class Streets4MPI(object):
 
             # gather local traffic loads from all other processes
             self.log("Exchanging traffic load data between nodes...")
-            local_traffic_loads = communicator.allgather(simulation.traffic_load)
-
-            # sum up total traffic load
-            self.log("Merging traffic load data...")
-            total_traffic_load = merge_arrays(local_traffic_loads)
+            total_traffic_load = array("I", repeat(0, len(simulation.traffic_load)))
+            communicator.Allreduce(simulation.traffic_load, total_traffic_load, MPI.SUM)
             simulation.traffic_load = total_traffic_load
             simulation.cumulative_traffic_load = merge_arrays((total_traffic_load, simulation.cumulative_traffic_load))
-            del local_traffic_loads
 
             if self.process_rank == 0 and settings["persist_traffic_load"]:
                 self.log_indent("Saving traffic load to disk...")

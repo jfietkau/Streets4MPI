@@ -24,13 +24,10 @@
 import re
 from os import listdir
 from PIL import Image, ImageChops, ImageDraw, ImageFont
-from math import floor
-from datetime import datetime
 
 from pygraph.algorithms.accessibility import connected_components
 
-from streetnetwork import StreetNetwork
-from persistence import persist_read
+from project.persistence import persist_read
 from simulation import calculate_driving_speed
 
 # This class turns persistent traffic load data into images

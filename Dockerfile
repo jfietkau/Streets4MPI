@@ -46,12 +46,15 @@ RUN sudo curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
 RUN sudo python get-pip.py
 
 # Install pygraph
-COPY project/python-graph/ ./python-graph
-RUN cd python-graph/core/ && sudo python2 setup.py install
+#COPY project/python-graph/ ./python-graph
+#RUN cd python-graph/core/ && sudo python2 setup.py install
 
 # Install python requirments
 COPY project/requirements.txt .
 RUN sudo pip2.7 install -r requirements.txt
+
+# Clean up downloaded files
+#RUN rm
 
 # # ------------------------------------------------------------
 # Copy over project code

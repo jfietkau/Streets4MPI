@@ -20,14 +20,13 @@
 # You should have received a copy of the GNU General Public License
 # along with Streets4MPI.  If not, see <http://www.gnu.org/licenses/>.
 #
-import timeit
+
 from array import array
 from datetime import datetime
 from itertools import repeat
 from random import random
-from random import seed
-
-from mpi4py import MPI
+from random import seed, randint
+from timeit import timeit
 
 from osmdata import GraphBuilder
 from persistence import persist_write
@@ -38,19 +37,12 @@ from utils import merge_arrays
 
 
 # This class runs the Streets4MPI program.
-# streets4mpi = \
-# """
-class Streets4MPI(object):
+class Streets4Serial(object):
 
     def __init__(self):
-        # get process info from mpi
-        communicator = MPI.COMM_WORLD
-        self.process_rank = communicator.Get_rank()
-        number_of_processes = communicator.Get_size()
-
         self.log("Welcome to Streets4MPI!")
         # set random seed based on process rank
-        random_seed = settings["random_seed"] + (37 * self.process_rank)
+        random_seed = settings["random_seed"] + (37 * randint(1, 20))
         seed(random_seed)
 
         self.log("Reading OpenStreetMap data...")
@@ -59,7 +51,7 @@ class Streets4MPI(object):
         self.log("Building street network...")
         street_network = data.build_street_network()
 
-        if self.process_rank == 0 and settings["persist_traffic_load"]:
+        if settings["persist_traffic_load"]:
             self.log_indent("Saving street network to disk...")
             persist_write("street_network_1.s4mpi", street_network)
 
@@ -69,7 +61,7 @@ class Streets4MPI(object):
         self.log("Generating trips...")
         trip_generator = TripGenerator()
         # distribute residents over processes
-        number_of_residents = settings["number_of_residents"] / number_of_processes
+        number_of_residents = settings["number_of_residents"]
         if settings["use_residential_origins"]:
             potential_origins = data.connected_residential_nodes
         else:
@@ -85,11 +77,10 @@ class Streets4MPI(object):
         simulation = Simulation(street_network, trips, jam_tolerance, self.log_indent)
 
         for step in range(settings["max_simulation_steps"]):
-
             if step > 0 and step % settings["steps_between_street_construction"] == 0:
                 self.log_indent("Road construction taking place...")
                 simulation.road_construction()
-                if self.process_rank == 0 and settings["persist_traffic_load"]:
+                if settings["persist_traffic_load"]:
                     persist_write("street_network_" + str(step + 1) + ".s4mpi", simulation.street_network)
 
             self.log("Running simulation step", step + 1, "of", str(settings["max_simulation_steps"]) + "...")
@@ -98,11 +89,10 @@ class Streets4MPI(object):
             # gather local traffic loads from all other processes
             self.log("Exchanging traffic load data between nodes...")
             total_traffic_load = array("I", repeat(0, len(simulation.traffic_load)))
-            communicator.Allreduce(simulation.traffic_load, total_traffic_load, MPI.SUM)
             simulation.traffic_load = total_traffic_load
             simulation.cumulative_traffic_load = merge_arrays((total_traffic_load, simulation.cumulative_traffic_load))
 
-            if self.process_rank == 0 and settings["persist_traffic_load"]:
+            if settings["persist_traffic_load"]:
                 self.log_indent("Saving traffic load to disk...")
                 persist_write("traffic_load_" + str(step + 1) + ".s4mpi", total_traffic_load, is_array=True)
 
@@ -112,22 +102,20 @@ class Streets4MPI(object):
 
     def log(self, *output):
         if (settings["logging"] == "stdout"):
-            print "[ %s ][ p%d ]" % (datetime.now(), self.process_rank),
+            print "[ %s ]  " % (datetime.now()),
             for o in output:
                 print o,
             print ""
 
     def log_indent(self, *output):
         if (settings["logging"] == "stdout"):
-            print "[ %s ][ p%d ]  " % (datetime.now(), self.process_rank),
+            print "[ %s ]  " % (datetime.now()),
             for o in output:
                 print o,
             print ""
 
 
-# """
-
 if __name__ == "__main__":
-    print timeit.timeit(stmt=Streets4MPI,
-                        number=1)
-    # Streets4MPI()
+    print timeit(stmt=Streets4Serial,
+                 number=1)
+    # Streets4Serial()

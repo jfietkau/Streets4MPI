@@ -21,15 +21,14 @@
 # along with Streets4MPI.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from time import time
-from math import sqrt
-from operator import itemgetter
 from array import array
 from itertools import repeat
+from math import sqrt
+from operator import itemgetter
 
-from osmdata import GraphBuilder
-from streetnetwork import StreetNetwork
 from settings import settings
+from streetnetwork import StreetNetwork
+
 
 # This class does the actual simulation steps
 class Simulation(object):
@@ -43,7 +42,6 @@ class Simulation(object):
         self.traffic_load = array("I", repeat(0, self.street_network.street_index))
 
         self.cumulative_traffic_load = None
-
 
     def step(self):
         self.step_counter += 1
@@ -87,15 +85,14 @@ class Simulation(object):
                         street_index = self.street_network.get_street_index(street)
                         self.traffic_load[street_index] += usage
 
-
     def road_construction(self):
         dict_traffic_load = dict()
         for i in range(0, len(self.cumulative_traffic_load)):
             street = self.street_network.get_street_by_index(i)
             dict_traffic_load[street] = self.cumulative_traffic_load[i]
-        sorted_traffic_load = sorted(dict_traffic_load.iteritems(), key = itemgetter(1))
-        max_decrease_index =  0.15 * len(sorted_traffic_load) # bottom 15%
-        min_increase_index = 0.95 * len(sorted_traffic_load) # top 5%
+        sorted_traffic_load = sorted(dict_traffic_load.iteritems(), key=itemgetter(1))
+        max_decrease_index = 0.15 * len(sorted_traffic_load)  # bottom 15%
+        min_increase_index = 0.95 * len(sorted_traffic_load)  # top 5%
         for i in range(len(sorted_traffic_load)):
             if i <= max_decrease_index:
                 if not self.street_network.change_maxspeed(sorted_traffic_load[i][0], -20):
@@ -119,21 +116,24 @@ def calculate_driving_speed_var(street_length, max_speed, number_of_trips):
     # actual speed = min(max speed, potential speed)
 
     # all in one calculation:
-    intermediate_quotient_result = settings["traffic_period_duration"] * 3600 * settings["braking_deceleration"] / max(number_of_trips, 1)
-    potential_speed = sqrt(intermediate_quotient_result**2 + 2 * settings["car_length"] * settings["braking_deceleration"]) + intermediate_quotient_result # m/s
-    actual_speed = min(max_speed, potential_speed * 3.6) # km/h
+    intermediate_quotient_result = settings["traffic_period_duration"] * 3600 * settings["braking_deceleration"] / max(
+        number_of_trips, 1)
+    potential_speed = sqrt(intermediate_quotient_result ** 2 + 2 * settings["car_length"] * settings[
+        "braking_deceleration"]) + intermediate_quotient_result  # m/s
+    actual_speed = min(max_speed, potential_speed * 3.6)  # km/h
 
     return actual_speed
 
 
 def calculate_driving_speed(street_length, max_speed, number_of_trips):
     # distribute trips over the street
-    available_space_for_each_car = street_length / max(number_of_trips, 1) # m
-    available_braking_distance = max(available_space_for_each_car - settings["car_length"], settings["min_breaking_distance"]) # m
+    available_space_for_each_car = street_length / max(number_of_trips, 1)  # m
+    available_braking_distance = max(available_space_for_each_car - settings["car_length"],
+                                     settings["min_breaking_distance"])  # m
     # how fast can a car drive to ensure the calculated breaking distance?
-    potential_speed = sqrt(settings["braking_deceleration"] * available_braking_distance * 2) # m/s
+    potential_speed = sqrt(settings["braking_deceleration"] * available_braking_distance * 2)  # m/s
     # cars respect speed limit
-    actual_speed = min(max_speed, potential_speed * 3.6) # km/h
+    actual_speed = min(max_speed, potential_speed * 3.6)  # km/h
 
     return actual_speed
 
@@ -143,6 +143,7 @@ if __name__ == "__main__":
         for o in output:
             print o,
         print ''
+
 
     street_network = StreetNetwork()
     street_network.add_node(1, 0, 0)
@@ -159,4 +160,3 @@ if __name__ == "__main__":
         print "Running simulation step", step + 1, "of 10..."
         sim.step()
     # done
-

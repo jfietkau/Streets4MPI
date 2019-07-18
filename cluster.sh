@@ -158,7 +158,7 @@ up_workers ()
     printf "\\n%s\\n" "$HEADER"
     echo "$ docker-compose up -d worker"
     printf "\\n"
-    docker-compose up -d worker 
+    docker-compose up -d worker
 
     printf "\\n"
     printf "\\n%s\\n" "$HEADER"

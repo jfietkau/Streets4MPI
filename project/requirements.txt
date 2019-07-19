@@ -1,3 +1,4 @@
+click
 imposm==2.6.0
 imposm.parser==1.0.7
 mpi4py==3.0.2
@@ -5,3 +6,4 @@ Pillow==6.0.0
 protobuf==3.7.0
 psycopg2==2.8.3
 python-graph-core==1.8.2
+pytracemalloc

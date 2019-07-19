@@ -22,6 +22,8 @@
 
 from array import array
 from itertools import repeat
+from math import floor
+
 
 def merge_arrays(arrays):
     merged_array = array("I", repeat(0, len(arrays[0])))
@@ -33,3 +35,11 @@ def merge_arrays(arrays):
 
     return merged_array
 
+
+def print_header(text):
+    print '#' * 40
+    print '#'
+    # This would be so much easier with fstrings, god bless 3.6
+    print '#' + " " * (20 - floor(len(text) / 2)) + text + '*' * (40 - len(text) - 1) + "#"
+    print '#'
+    print '#' * 40

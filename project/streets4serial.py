@@ -21,6 +21,9 @@
 # along with Streets4MPI.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+
+import linecache
+import os
 from array import array
 from datetime import datetime
 from itertools import repeat
@@ -28,22 +31,21 @@ from random import random
 from random import seed, randint
 from timeit import timeit
 
+import tracemalloc
+
 from osmdata import GraphBuilder
 from persistence import persist_write
 from settings import settings
 from simulation import Simulation
 from tripgenerator import TripGenerator
-from utils import merge_arrays
+from utils import merge_arrays, print_header
 
-import os
-import linecache
-import tracemalloc
 
 # This class runs the Streets4MPI program.
 class Streets4Serial(object):
 
     def __init__(self):
-        self.log("Welcome to Streets4MPI!")
+        self.log("Streets4Serial!")
         # set random seed based on process rank
         random_seed = settings["random_seed"] + (37 * randint(1, 20))
         seed(random_seed)
@@ -119,11 +121,11 @@ class Streets4Serial(object):
 
 
 def display_top(snapshot, key_type='lineno', limit=10):
-    snapshot = snapshot.filter_traces((
-        tracemalloc.Filter(False, "<frozen importlib._bootstrap>"),
-        tracemalloc.Filter(False, "<unknown>"),
-    ))
-    top_stats = snapshot.statistics(key_type)
+    # snapshot = snapshot.filter_traces((
+    #     tracemalloc.Filter(False, "<frozen importlib._bootstrap>"),
+    #     tracemalloc.Filter(False, "<unknown>"),
+    # ))
+    # top_stats = snapshot.statistics(key_type)
 
     print("Top %s lines" % limit)
     for index, stat in enumerate(top_stats[:limit], 1):
@@ -143,10 +145,11 @@ def display_top(snapshot, key_type='lineno', limit=10):
     total = sum(stat.size for stat in top_stats)
     print("Total allocated size: %.1f KiB" % (total / 1024))
 
+
 if __name__ == "__main__":
     tracemalloc.start()
-    #print timeit(stmt=Streets4Serial,
-    #             number=10)
-    Streets4Serial()
+    print timeit(stmt=Streets4Serial,
+                        number=1)
+    # Streets4Serial()
     snapshot = tracemalloc.take_snapshot()
     display_top(snapshot)

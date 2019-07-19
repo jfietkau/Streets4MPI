@@ -35,7 +35,10 @@ from simulation import Simulation
 from tripgenerator import TripGenerator
 from utils import merge_arrays
 
-import pytracemalloc
+import os
+import linecache
+import tracemalloc
+
 # This class runs the Streets4MPI program.
 class Streets4Serial(object):
 

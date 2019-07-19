@@ -121,11 +121,11 @@ class Streets4Serial(object):
 
 
 def display_top(snapshot, key_type='lineno', limit=10):
-    # snapshot = snapshot.filter_traces((
-    #     tracemalloc.Filter(False, "<frozen importlib._bootstrap>"),
-    #     tracemalloc.Filter(False, "<unknown>"),
-    # ))
-    # top_stats = snapshot.statistics(key_type)
+    snapshot = snapshot.filter_traces((
+        tracemalloc.Filter(False, "<frozen importlib._bootstrap>"),
+        tracemalloc.Filter(False, "<unknown>"),
+    ))
+    top_stats = snapshot.statistics(key_type)
 
     print("Top %s lines" % limit)
     for index, stat in enumerate(top_stats[:limit], 1):

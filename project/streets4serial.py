@@ -29,7 +29,6 @@ from datetime import datetime
 from itertools import repeat
 from random import random
 from random import seed, randint
-from timeit import timeit
 
 import tracemalloc
 
@@ -38,13 +37,13 @@ from persistence import persist_write
 from settings import settings
 from simulation import Simulation
 from tripgenerator import TripGenerator
-from utils import merge_arrays, print_header
+from utils import merge_arrays
 
 
 # This class runs the Streets4MPI program.
 class Streets4Serial(object):
 
-    def __init__(self):
+    def __init__(self, num_of_residents):
         self.log("Streets4Serial!")
         # set random seed based on process rank
         random_seed = settings["random_seed"] + (37 * randint(1, 20))
@@ -66,7 +65,13 @@ class Streets4Serial(object):
         self.log("Generating trips...")
         trip_generator = TripGenerator()
         # distribute residents over processes
-        number_of_residents = settings["number_of_residents"]
+
+        if num_of_residents:
+            self.log("CLI tool passed number_of_residents value of " + str(num_of_residents))
+            number_of_residents = num_of_residents
+        else:
+            number_of_residents = settings["number_of_residents"]
+
         if settings["use_residential_origins"]:
             potential_origins = data.connected_residential_nodes
         else:
@@ -145,11 +150,11 @@ def display_top(snapshot, key_type='lineno', limit=10):
     total = sum(stat.size for stat in top_stats)
     print("Total allocated size: %.1f KiB" % (total / 1024))
 
-
-if __name__ == "__main__":
-    tracemalloc.start()
-    print timeit(stmt=Streets4Serial,
-                        number=1)
-    # Streets4Serial()
-    snapshot = tracemalloc.take_snapshot()
-    display_top(snapshot)
+#
+# if __name__ == "__main__":
+# tracemalloc.start()
+# print timeit(stmt=Streets4Serial,
+#                     number=1)
+# # Streets4Serial()
+# snapshot = tracemalloc.take_snapshot()
+# display_top(snapshot)

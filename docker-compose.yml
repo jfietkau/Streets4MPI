@@ -8,6 +8,7 @@ services:
 
   master:
     image: $REGISTRY_ADDR:$REGISTRY_PORT/$IMAGE_NAME
+    restart: always
     user: root
     entrypoint: ["mpi_bootstrap", "role=master", "mpi_master_service_name=master", "mpi_worker_service_name=worker"]
     ports:
@@ -17,6 +18,7 @@ services:
 
   worker:
     image: $REGISTRY_ADDR:$REGISTRY_PORT/$IMAGE_NAME
+    restart: always
     user: root
     entrypoint: ["mpi_bootstrap", "role=worker", "mpi_master_service_name=master", "mpi_worker_service_name=worker"]
     networks:

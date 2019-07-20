@@ -136,6 +136,27 @@ being `TRAFFIC_LOAD`. Furthermore, *Streets4MPI* supports two color modes: one
 for heatmap-style colorful maps and one for grayscale images where brightness
 denotes intensity.
 
+## Timings 
+
+Launch cluster
+
+`./cluster up`
+
+Login to the cluster
+
+`./cluster login`
+
+Use the cli tool to pass custom arguments
+
+Ex. Run serial version with 10 residents 10 times
+
+`./cli.py -n 10 -i 10 run-serial`
+
+Find all available commands
+
+`./cli.py --help`
+
+
 ## Known Limitations
 
 When dealing with very large numbers of residents and/or street networks,

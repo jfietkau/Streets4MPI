@@ -27,7 +27,7 @@ def run_serial(ctx):
         ctx.obj['NUM_RESIDENTS'], ctx.obj['ITERATIONS']))
     from timeit import Timer
     t = Timer(lambda: Streets4Serial(num_of_residents=ctx.obj['NUM_RESIDENTS']))
-    print(t.timeit(number=ctx.obj['ITERATIONS']))
+    print("Execution time: " + str(t.timeit(number=ctx.obj['ITERATIONS'])) + " seconds")
     click.echo("Successfully ran serial version with %d residents with %d iterations" % (
         ctx.obj['NUM_RESIDENTS'], ctx.obj['ITERATIONS']))
 

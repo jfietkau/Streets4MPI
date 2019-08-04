@@ -86,7 +86,7 @@ class GraphBuilder(object):
         self.max_speed_map["pedestrian"] = 1 # >0 to prevent infinite weights
         self.max_speed_map["footway"] = 1    # >0 to prevent infinite weights
 
-        p = OSMParser(concurrency = 1,
+        p = OSMParser(concurrency = 4,
                       coords_callback = self.coords_callback,
                       nodes_callback = self.nodes_callback,
                       ways_callback = self.ways_callback,

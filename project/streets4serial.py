@@ -30,7 +30,8 @@ from itertools import repeat
 from random import random
 from random import seed, randint
 
-import tracemalloc
+# import tracemalloc
+from timeit import timeit
 
 from osmdata import GraphBuilder
 from persistence import persist_write
@@ -43,10 +44,10 @@ from utils import merge_arrays
 # This class runs the Streets4MPI program.
 class Streets4Serial(object):
 
-    def __init__(self, num_of_residents):
+    def __init__(self):
         self.log("Streets4Serial!")
         # set random seed based on process rank
-        random_seed = settings["random_seed"] + (37 * randint(1, 20))
+        random_seed = settings["random_seed"] + (37)
         seed(random_seed)
 
         self.log("Reading OpenStreetMap data...")
@@ -57,7 +58,7 @@ class Streets4Serial(object):
 
         if settings["persist_traffic_load"]:
             self.log_indent("Saving street network to disk...")
-            persist_write("street_network_1.s4mpi", street_network)
+            persist_write("street_network_1.s4serial", street_network)
 
         self.log("Locating area types...")
         data.find_node_categories()
@@ -66,11 +67,7 @@ class Streets4Serial(object):
         trip_generator = TripGenerator()
         # distribute residents over processes
 
-        if num_of_residents:
-            self.log("CLI tool passed number_of_residents value of " + str(num_of_residents))
-            number_of_residents = num_of_residents
-        else:
-            number_of_residents = settings["number_of_residents"]
+        number_of_residents = settings["number_of_residents"]
 
         if settings["use_residential_origins"]:
             potential_origins = data.connected_residential_nodes
@@ -85,41 +82,38 @@ class Streets4Serial(object):
 
         # run simulation
         simulation = Simulation(street_network, trips, jam_tolerance, self.log_indent)
-
         for step in range(settings["max_simulation_steps"]):
             if step > 0 and step % settings["steps_between_street_construction"] == 0:
                 self.log_indent("Road construction taking place...")
                 simulation.road_construction()
                 if settings["persist_traffic_load"]:
-                    persist_write("street_network_" + str(step + 1) + ".s4mpi", simulation.street_network)
+                    persist_write("street_network_" + str(step + 1) + ".s4serial", simulation.street_network)
 
             self.log("Running simulation step", step + 1, "of", str(settings["max_simulation_steps"]) + "...")
             simulation.step()
 
-            # gather local traffic loads from all other processes
-            self.log("Exchanging traffic load data between nodes...")
-            total_traffic_load = array("I", repeat(0, len(simulation.traffic_load)))
-            simulation.traffic_load = total_traffic_load
+            total_traffic_load = simulation.traffic_load
             simulation.cumulative_traffic_load = merge_arrays((total_traffic_load, simulation.cumulative_traffic_load))
 
             if settings["persist_traffic_load"]:
                 self.log_indent("Saving traffic load to disk...")
-                persist_write("traffic_load_" + str(step + 1) + ".s4mpi", total_traffic_load, is_array=True)
+                persist_write("traffic_load_" + str(step + 1) + ".s4serial", total_traffic_load, is_array=True)
 
+            print(len(total_traffic_load))
             del total_traffic_load
 
         self.log("Done!")
 
     def log(self, *output):
         if (settings["logging"] == "stdout"):
-            print "[ %s ]  " % (datetime.now()),
+            print "[ %s ]" % (datetime.now()),
             for o in output:
                 print o,
             print ""
 
     def log_indent(self, *output):
         if (settings["logging"] == "stdout"):
-            print "[ %s ]  " % (datetime.now()),
+            print "[ %s ]" % (datetime.now()),
             for o in output:
                 print o,
             print ""
@@ -151,10 +145,10 @@ def display_top(snapshot, key_type='lineno', limit=10):
     print("Total allocated size: %.1f KiB" % (total / 1024))
 
 #
-# if __name__ == "__main__":
+if __name__ == "__main__":
 # tracemalloc.start()
 # print timeit(stmt=Streets4Serial,
 #                     number=1)
-# # Streets4Serial()
+    print timeit(stmt=Streets4Serial, number=1)
 # snapshot = tracemalloc.take_snapshot()
 # display_top(snapshot)

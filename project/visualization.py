@@ -27,12 +27,12 @@ from PIL import Image, ImageChops, ImageDraw, ImageFont
 
 from pygraph.algorithms.accessibility import connected_components
 
-from project.persistence import persist_read
+from persistence import persist_read
 from simulation import calculate_driving_speed
+
 
 # This class turns persistent traffic load data into images
 class Visualization(object):
-
     ATTRIBUTE_KEY_COMPONENT = 2
 
     # Modes:
@@ -46,13 +46,14 @@ class Visualization(object):
     # HEATMAP      - vary hue on a temperature-inspired scale from dark blue to red
     # MONOCHROME   - vary brightness from black to white
 
-    def __init__(self, street_network_filename_pattern, traffic_load_filename_pattern, mode = 'TRAFFIC_LOAD', color_mode = 'HEATMAP'):
+    def __init__(self, street_network_filename_pattern, traffic_load_filename_pattern, mode='TRAFFIC_LOAD',
+                 color_mode='HEATMAP', version=".s4mpi", viz_type="mpi"):
         print "Welcome to Streets4MPI visualization!"
         print "Current display mode:", mode, "with color mode", color_mode
 
         self.max_resolution = (2000, 2000)
         self.zoom = 1
-        self.coord2km = (111.32, 66.4) # distances between 2 deg of lat/lon
+        self.coord2km = (111.32, 66.4)  # distances between 2 deg of lat/lon
         self.bounds = None
         self.street_network = None
         self.node_coords = dict()
@@ -60,6 +61,8 @@ class Visualization(object):
         self.color_mode = color_mode
         self.street_network_filename_expression = re.compile(street_network_filename_pattern)
         self.traffic_load_filename_expression = re.compile(traffic_load_filename_pattern)
+        self.version = version
+        self.viz_type = viz_type
 
     def visualize(self):
         # find files
@@ -72,7 +75,7 @@ class Visualization(object):
 
         # find max traffic load
         for traffic_load_file in traffic_load_files:
-            traffic_load = persist_read(traffic_load_file, is_array = True)
+            traffic_load = persist_read(traffic_load_file, is_array=True)
             max_load = max(max_load, max(traffic_load))
 
         step = 0
@@ -81,35 +84,36 @@ class Visualization(object):
             print "Step counter", step
 
             # check if there is a street network for the current step and load it
-            street_network_filename = "street_network_" + str(step) + ".s4mpi"
+            street_network_filename = "street_network_" + str(step) + self.version
             if street_network_filename in street_network_files:
                 print "  Found street network data, reading..."
                 self.street_network = persist_read(street_network_filename)
                 self.bounds = self.street_network.bounds
                 self.zoom = self.max_resolution[0] / max((self.bounds[0][1] - self.bounds[0][0]) * self.coord2km[0],
-                                  (self.bounds[1][1] - self.bounds[1][0]) * self.coord2km[1])
+                                                         (self.bounds[1][1] - self.bounds[1][0]) * self.coord2km[1])
 
                 for node in self.street_network.get_nodes():
                     coords = self.street_network.node_coordinates(node)
                     point = dict()
                     for i in range(2):
-                        point[i] = (coords[1-i] - self.bounds[i][0]) * self.coord2km[i] * self.zoom
-                    self.node_coords[node] = (point[1], self.max_resolution[1] - point[0]) # x = longitude, y = latitude
+                        point[i] = (coords[1 - i] - self.bounds[i][0]) * self.coord2km[i] * self.zoom
+                    self.node_coords[node] = (
+                        point[1], self.max_resolution[1] - point[0])  # x = longitude, y = latitude
 
                 if self.mode == 'COMPONENTS':
-                      self.calculate_components(self.street_network._graph)
+                    self.calculate_components(self.street_network._graph)
 
             # check if there is traffic load for the current step and draw it
-            traffic_load_filename = "traffic_load_" + str(step) + ".s4mpi"
+            traffic_load_filename = "traffic_load_" + str(step) + self.version
             if traffic_load_filename in traffic_load_files:
                 print "  Found traffic load data, reading and drawing..."
-                traffic_load = persist_read(traffic_load_filename, is_array = True)
+                traffic_load = persist_read(traffic_load_filename, is_array=True)
                 street_network_image = Image.new("RGBA", self.max_resolution, (0, 0, 0, 255))
                 draw = ImageDraw.Draw(street_network_image)
 
                 for street, street_index, length, max_speed in self.street_network:
-                    color = (255, 255, 255, 0) # default: white
-                    width = 1 # max_speed / 50 looks bad for motorways
+                    color = (255, 255, 255, 0)  # default: white
+                    width = 1  # max_speed / 50 looks bad for motorways
                     value = 0
                     current_traffic_load = 0
                     current_traffic_load = traffic_load[street_index]
@@ -125,13 +129,14 @@ class Visualization(object):
                         value = min(1.0, 1.0 * actual_speed / 140)
                     color = self.value_to_color(value)
                     if self.mode == 'COMPONENTS':
-                        component = dict(self.street_network._graph.edge_attributes(street))[Visualization.ATTRIBUTE_KEY_COMPONENT]
-                        color = "hsl(" + str(int(137.5*component) % 360) + ",100%,50%)"
+                        component = dict(self.street_network._graph.edge_attributes(street))[
+                            Visualization.ATTRIBUTE_KEY_COMPONENT]
+                        color = "hsl(" + str(int(137.5 * component) % 360) + ",100%,50%)"
                     draw.line([self.node_coords[street[0]], self.node_coords[street[1]]], fill=color, width=width)
 
                 street_network_image = self.image_finalize(street_network_image, max_load)
-                print "  Saving image to disk (traffic_load_" + str(step) + ".png) ..."
-                street_network_image.save("traffic_load_" + str(step) + ".png")
+                print "  Saving image to disk (" + str(self.viz_type) + "_traffic_load_" + str(step) + ".png) ..."
+                street_network_image.save(str(self.viz_type) + "_traffic_load_" + str(step) + ".png")
 
                 traffic_load_files.remove(traffic_load_filename)
 
@@ -140,7 +145,8 @@ class Visualization(object):
     def calculate_components(self, graph):
         components = connected_components(graph)
         for edge in graph.edges():
-            graph.add_edge_attribute(edge, (Visualization.ATTRIBUTE_KEY_COMPONENT, max(components[edge[0]], components[edge[1]])))
+            graph.add_edge_attribute(edge, (
+                Visualization.ATTRIBUTE_KEY_COMPONENT, max(components[edge[0]], components[edge[1]])))
 
     def find_max_value(self, dictionary):
         max_value = 0
@@ -154,19 +160,19 @@ class Visualization(object):
             brightness = min(255, int(15 + 240 * value))
             return (brightness, brightness, brightness, 0)
         if self.color_mode == 'HEATMAP':
-            if value <= 0.2: # almost black to blue
-                return "hsl(260,100%," + str(5+int(45*5*value)) + "%)"
-            else: # blue to red
-                return "hsl(" + str(int(260*(1-(value-0.2)/0.8))) + ",100%,50%)"
+            if value <= 0.2:  # almost black to blue
+                return "hsl(260,100%," + str(5 + int(45 * 5 * value)) + "%)"
+            else:  # blue to red
+                return "hsl(" + str(int(260 * (1 - (value - 0.2) / 0.8))) + ",100%,50%)"
 
     def image_finalize(self, street_network_image, max_load):
         # take the current street network and make it pretty
         street_network_image = self.auto_crop(street_network_image)
 
-        white = (255,255,255,0)
-        black = (0,0,0,0)
+        white = (255, 255, 255, 0)
+        black = (0, 0, 0, 0)
         padding = self.max_resolution[0] / 40
-        legend = Image.new("RGBA", street_network_image.size, (0,0,0,255))
+        legend = Image.new("RGBA", street_network_image.size, (0, 0, 0, 255))
         font = ImageFont.load_default()
         draw = ImageDraw.Draw(legend)
         bar_outer_width = self.max_resolution[0] / 50
@@ -176,12 +182,14 @@ class Visualization(object):
         bar_offset = max(2, int(bar_outer_width - bar_inner_width) / 2)
 
         if self.mode in ['TRAFFIC_LOAD', 'MAX_SPEED', 'IDEAL_SPEED', 'ACTUAL_SPEED']:
-            draw.rectangle([(0, 0), (bar_outer_width, legend.size[1]-1)], fill = white)
+            draw.rectangle([(0, 0), (bar_outer_width, legend.size[1] - 1)], fill=white)
             border_width = int(bar_offset / 2)
-            draw.rectangle([(border_width, border_width), (bar_outer_width-border_width, legend.size[1]-1-border_width)], fill = black)
-            for y in xrange(bar_offset, legend.size[1]-bar_offset):
+            draw.rectangle(
+                [(border_width, border_width), (bar_outer_width - border_width, legend.size[1] - 1 - border_width)],
+                fill=black)
+            for y in xrange(bar_offset, legend.size[1] - bar_offset):
                 value = 1.0 * (y - bar_offset) / (legend.size[1] - 2 * bar_offset)
-                color = self.value_to_color(1.0 - value) # highest value at the top
+                color = self.value_to_color(1.0 - value)  # highest value at the top
                 draw.line([(bar_offset, y), (bar_offset + bar_inner_width, y)], fill=color)
             if self.mode == 'TRAFFIC_LOAD':
                 top_text = str(round(max_load, 1)) + " cars gone through"
@@ -195,32 +203,39 @@ class Visualization(object):
             if self.mode == 'ACTUAL_SPEED':
                 top_text = "actual driving speed: 140 km/h or higher"
                 bottom_text = "actual driving speed: 0 km/h"
-            draw.text((int(bar_outer_width * 1.3), 0), top_text, font = font, fill = white)
-            box = draw.textsize(bottom_text, font = font)
-            draw.text((int(bar_outer_width * 1.3), legend.size[1] - box[1]), bottom_text, font = font, fill = white)
+            draw.text((int(bar_outer_width * 1.3), 0), top_text, font=font, fill=white)
+            box = draw.textsize(bottom_text, font=font)
+            draw.text((int(bar_outer_width * 1.3), legend.size[1] - box[1]), bottom_text, font=font, fill=white)
 
         legend = self.auto_crop(legend)
 
         copyright = "Generated by Streets4MPI version 0.1 using data from the OpenStreetMap project. Licensed under CC-BY-SA 2.0 (https://creativecommons.org/licenses/by-sa/2.0/)."
-        copyright_size = draw.textsize(copyright, font = font)
+        copyright_size = draw.textsize(copyright, font=font)
 
         final_width = street_network_image.size[0] + legend.size[0] + 3 * padding
         final_height = legend.size[1] + 2 * padding + copyright_size[1] + 1
         final = Image.new("RGB", (final_width, final_height), black)
         final.paste(street_network_image, (padding, padding))
         final.paste(legend, (street_network_image.size[0] + 2 * padding, padding))
-        ImageDraw.Draw(final).text((2, legend.size[1] + 2 * padding), copyright, font = font, fill = white)
+        ImageDraw.Draw(final).text((2, legend.size[1] + 2 * padding), copyright, font=font, fill=white)
 
         return final
 
     def auto_crop(self, image):
         # remove black edges from image
-        empty = Image.new("RGBA", image.size, (0,0,0))
+        empty = Image.new("RGBA", image.size, (0, 0, 0))
         difference = ImageChops.difference(image, empty)
         bbox = difference.getbbox()
-        return image.crop(bbox)        
+        return image.crop(bbox)
+
 
 if __name__ == "__main__":
-    visualization = Visualization("^street_network_[0-9]+.s4mpi$", "^traffic_load_[0-9]+.s4mpi$", mode='TRAFFIC_LOAD')
-    visualization.visualize()
+    # Serial
+    serial_visualization = Visualization("^street_network_[0-9]+.s4serial$", "^traffic_load_[0-9]+.s4serial$",
+                                         mode='TRAFFIC_LOAD', version=".s4serial", viz_type="serial")
 
+    mpi_visualization = Visualization("^street_network_[0-9]+.s4mpi$", "^traffic_load_[0-9]+.s4mpi$",
+                                      mode='TRAFFIC_LOAD', version=".s4mpi", viz_type="mpi")
+
+    serial_visualization.visualize()
+    mpi_visualization.visualize()

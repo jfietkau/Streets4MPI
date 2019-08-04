@@ -20,9 +20,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Streets4MPI.  If not, see <http://www.gnu.org/licenses/>.
 #
-
+import time
+import timeit
 from datetime import datetime
-from random import random
+from random import random, randint
 from random import seed
 from array import array
 from itertools import repeat
@@ -36,6 +37,7 @@ from settings import settings
 from persistence import persist_write
 from utils import merge_arrays
 
+
 # This class runs the Streets4MPI program.
 class Streets4MPI(object):
 
@@ -46,8 +48,10 @@ class Streets4MPI(object):
         number_of_processes = communicator.Get_size()
 
         self.log("Welcome to Streets4MPI!")
+        if self.process_rank == 0:
+            start = time.time()
         # set random seed based on process rank
-        random_seed = settings["random_seed"] + (37 * self.process_rank)
+        random_seed = settings["random_seed"]
         seed(random_seed)
 
         self.log("Reading OpenStreetMap data...")
@@ -67,6 +71,7 @@ class Streets4MPI(object):
         trip_generator = TripGenerator()
         # distribute residents over processes
         number_of_residents = settings["number_of_residents"] / number_of_processes
+        self.log("Number of residents == " + str(number_of_residents))
         if settings["use_residential_origins"]:
             potential_origins = data.connected_residential_nodes
         else:
@@ -82,7 +87,6 @@ class Streets4MPI(object):
         simulation = Simulation(street_network, trips, jam_tolerance, self.log_indent)
 
         for step in range(settings["max_simulation_steps"]):
-
             if step > 0 and step % settings["steps_between_street_construction"] == 0:
                 self.log_indent("Road construction taking place...")
                 simulation.road_construction()
@@ -101,26 +105,30 @@ class Streets4MPI(object):
 
             if self.process_rank == 0 and settings["persist_traffic_load"]:
                 self.log_indent("Saving traffic load to disk...")
-                persist_write("traffic_load_" + str(step + 1) + ".s4mpi", total_traffic_load, is_array = True)
+                print len(total_traffic_load)
+                persist_write("traffic_load_" + str(step + 1) + ".s4mpi", total_traffic_load, is_array=True)
 
             del total_traffic_load
 
+        if self.process_rank == 0:
+            end = time.time()
+            print end - start
         self.log("Done!")
 
     def log(self, *output):
-        if(settings["logging"] == "stdout"):
+        if (settings["logging"] == "stdout"):
             print "[ %s ][ p%d ]" % (datetime.now(), self.process_rank),
             for o in output:
                 print o,
             print ""
 
     def log_indent(self, *output):
-        if(settings["logging"] == "stdout"):
+        if (settings["logging"] == "stdout"):
             print "[ %s ][ p%d ]  " % (datetime.now(), self.process_rank),
             for o in output:
                 print o,
             print ""
 
+
 if __name__ == "__main__":
     Streets4MPI()
-

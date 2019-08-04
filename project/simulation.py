@@ -66,10 +66,11 @@ class Simulation(object):
         self.traffic_load = array("I", repeat(0, self.street_network.street_index))
 
         origin_nr = 0
+        self.log_callback("Number of trips is " + str(len(self.trips)))
         for origin in self.trips.keys():
             # calculate all shortest paths from resident to every other node
             origin_nr += 1
-            self.log_callback("Origin nr", str(origin_nr) + "...")
+            # self.log_callback("Origin nr", str(origin_nr) + "...")
             paths = self.street_network.calculate_shortest_paths(origin)
 
             # increase traffic load

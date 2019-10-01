@@ -46,6 +46,7 @@ availability of the external packages on which it relies:
   *OpenStreetMap* imports
 * [python-graph](http://code.google.com/p/python-graph/) for large-scale
   graph structures
+* [zlib](https://www.zlib.net/) and
 * [Python Imaging Library](http://www.pythonware.com/products/pil/) for
   visualization output
 
@@ -130,6 +131,10 @@ nodes and manage the communication automatically.
 The visualization component of *Streets4MPI* is rund independantly of the main
 simulation. It checks its working directory for files with the `.s4mpi`
 extension and attempts to visualize them.
+
+```bash
+python visualization.py
+```
 
 Several data modes are supported, default and probably the most interesting one
 being `TRAFFIC_LOAD`. Furthermore, *Streets4MPI* supports two color modes: one
